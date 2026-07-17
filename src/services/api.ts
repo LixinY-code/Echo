@@ -29,14 +29,35 @@ function delay(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms))
 }
 
+/** 匿名用户标识：首次生成 UUID 存 localStorage，每次请求带在 X-User-Id 头 */
+function getDeviceId(): string {
+  const KEY = 'echo_device_id'
+  let id: string | null = null
+  try {
+    id = localStorage.getItem(KEY)
+  } catch {
+    /* SSR 或隐私模式下 localStorage 不可用 */
+  }
+  if (!id) {
+    id = crypto.randomUUID?.() || genId()
+    try {
+      localStorage.setItem(KEY, id)
+    } catch {
+      /* ignore */
+    }
+  }
+  return id
+}
+
 /** 统一请求封装（真实后端用） */
 async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
   const res = await fetch(`${BASE_URL}${path}`, {
+    ...options,
     headers: {
       'Content-Type': 'application/json',
+      'X-User-Id': getDeviceId(),
       ...(options.headers || {}),
     },
-    ...options,
   })
   if (!res.ok) {
     throw new Error(`请求失败：${res.status} ${res.statusText}`)

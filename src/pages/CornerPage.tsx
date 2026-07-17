@@ -5,11 +5,13 @@
  * - 温暖总结文案
  * - 午后阳光渐变背景
  * - "我做了"按钮：完成现实任务，让花园生长
+ *
+ * 任务数来自后端 /insights 的 completedQuests + 本地点击乐观增量，
+ * 这样 mock 与真实模式都正确。
  */
 import { useEffect, useState, useCallback } from 'react'
 import type { Insights } from '@/types'
 import { getInsights, completeQuest } from '@/services/api'
-import { useApp } from '@/context/AppContext'
 import HandDrawnIcon, { type IconName } from '@/components/common/HandDrawnIcon'
 import WarmButton from '@/components/common/WarmButton'
 
@@ -33,10 +35,11 @@ function gardenStage(count: number): {
 }
 
 export default function CornerPage() {
-  const { questCount, refreshQuestCount, bumpQuestCount } = useApp()
   const [insights, setInsights] = useState<Insights | null>(null)
   const [loading, setLoading] = useState(true)
   const [completing, setCompleting] = useState(false)
+  // 本地点击乐观增量（点击"我做了"后立即 +1，下次刷新 insights 覆盖）
+  const [localBump, setLocalBump] = useState(0)
 
   const load = useCallback(async () => {
     setLoading(true)
@@ -52,24 +55,24 @@ export default function CornerPage() {
 
   useEffect(() => {
     load()
-    refreshQuestCount()
-  }, [load, refreshQuestCount])
+  }, [load])
 
   const handleComplete = useCallback(async () => {
     if (completing) return
     setCompleting(true)
     try {
       await completeQuest(crypto.randomUUID?.() ?? String(Date.now()))
-      bumpQuestCount()
+      setLocalBump((n) => n + 1)
     } finally {
       setCompleting(false)
     }
-  }, [completing, bumpQuestCount])
+  }, [completing])
 
-  const stage = gardenStage(questCount)
+  const displayCount = (insights?.completedQuests ?? 0) + localBump
+  const stage = gardenStage(displayCount)
 
   const stats: StatCard[] = [
-    { icon: 'leaf', label: '本周完成的任务', value: questCount, unit: '件' },
+    { icon: 'leaf', label: '本周完成的任务', value: displayCount, unit: '件' },
     { icon: 'journal', label: '记录的日记', value: insights?.journalCount ?? 0, unit: '页' },
     { icon: 'eye', label: '发现的盲点', value: insights?.blindspotCount ?? 0, unit: '次' },
   ]
