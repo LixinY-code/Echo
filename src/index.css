@@ -1,0 +1,141 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ============ 全局基础 ============ */
+@layer base {
+  :root {
+    /* 字体相关 */
+    --font-round: 'Nunito', 'PingFang SC', 'Microsoft YaHei', system-ui, sans-serif;
+    --font-hand: 'Caveat', 'Nunito', cursive;
+
+    /* 标准阴影：所有卡片、按钮统一柔和阴影 */
+    --shadow-soft: 0 4px 20px rgba(0, 0, 0, 0.03);
+  }
+
+  html {
+    scroll-behavior: smooth;
+  }
+
+  body {
+    margin: 0;
+    font-family: var(--font-round);
+    background-color: #fff8f0; /* 暖奶油色 */
+    color: #4a3f35; /* 深棕文字 */
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    /* 整体柔和氛围 */
+    background-image:
+      radial-gradient(circle at 20% 10%, rgba(255, 179, 71, 0.06), transparent 40%),
+      radial-gradient(circle at 85% 90%, rgba(168, 197, 160, 0.05), transparent 45%);
+    min-height: 100vh;
+  }
+
+  /* 尊重用户的减少动效偏好 */
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+    }
+  }
+
+  /* 柔和滚动条 */
+  ::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  ::-webkit-scrollbar-thumb {
+    background: rgba(74, 63, 53, 0.15);
+    border-radius: 8px;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background: rgba(74, 63, 53, 0.28);
+  }
+
+  /* 选中文字颜色 */
+  ::selection {
+    background: rgba(255, 179, 71, 0.25);
+    color: #4a3f35;
+  }
+}
+
+/* ============ 组件层：手作感工具类 ============ */
+@layer components {
+  /* 手撕纸张边缘效果：用多层 box-shadow 模拟不规整边缘 */
+  .paper-edge {
+    background-color: #fbf4e6;
+    background-image: repeating-linear-gradient(
+      transparent,
+      transparent 27px,
+      rgba(74, 63, 53, 0.07) 28px
+    );
+    /* 不规则边缘 */
+    -webkit-mask-image: radial-gradient(circle at 50% 50%, #000 98%, transparent 100%);
+    mask-image: radial-gradient(circle at 50% 50%, #000 98%, transparent 100%);
+    box-shadow:
+      0 4px 20px rgba(0, 0, 0, 0.03),
+      inset 0 0 0 1px rgba(74, 63, 53, 0.04);
+  }
+
+  /* 信纸背景 */
+  .letter-paper {
+    background-color: #fbf4e6;
+    background-image: repeating-linear-gradient(
+      transparent,
+      transparent 31px,
+      rgba(74, 63, 53, 0.06) 32px
+    );
+  }
+
+  /* 纸张模糊质感（Mirror 面板背景） */
+  .paper-blur {
+    backdrop-filter: blur(6px);
+    background-color: rgba(251, 244, 230, 0.82);
+  }
+
+  /* 暖光台灯氛围容器 */
+  .lamp-glow {
+    background: radial-gradient(
+      ellipse at 50% 0%,
+      rgba(255, 201, 113, 0.22),
+      transparent 60%
+    );
+  }
+
+  /* 通用柔和卡片 */
+  .warm-card {
+    @apply bg-cream-50 rounded-3xl border border-ink/5 shadow-soft;
+  }
+}
+
+/* ============ 工具层 ============ */
+@layer utilities {
+  /* 文字逐行淡入：配合 inline style 的 animation-delay 使用 */
+  .line-reveal {
+    opacity: 0;
+    animation: fadeInUp 0.7s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+  }
+
+  /* 隐藏滚动条（横向滑动卡片用） */
+  .no-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+
+  /* 触摸友好滑动 */
+  .snap-x-mandatory {
+    scroll-snap-type: x mandatory;
+  }
+  .snap-start {
+    scroll-snap-align: start;
+  }
+}

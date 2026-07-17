@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" fill="none">
+  <!-- 台灯灯罩 -->
+  <path d="M22 12 Q32 8 42 12 L40 28 Q32 30 24 28 Z" fill="#FFB347" opacity="0.9"/>
+  <!-- 灯杆 -->
+  <path d="M32 28 L32 48" stroke="#4A3F35" stroke-width="2.5" stroke-linecap="round"/>
+  <!-- 灯座 -->
+  <path d="M22 50 Q32 48 42 50 L40 54 Q32 56 24 54 Z" fill="#4A3F35"/>
+  <!-- 灯光晕 -->
+  <circle cx="32" cy="20" r="14" fill="#FFD699" opacity="0.25"/>
+</svg>
