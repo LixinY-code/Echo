@@ -6,11 +6,14 @@ module.exports = async (req, res) => {
 
   if (req.method === 'GET') {
     try {
-      const list = await getJournals(userId)
+      const uid = await ensureUser(userId)
+      const list = await getJournals(uid)
       return res.json(list)
     } catch (e) {
       console.error('[journal GET] 错误：', e)
-      return res.status(500).json({ error: '获取日记失败', detail: String(e) })
+      return res
+        .status(500)
+        .json({ error: '获取日记失败', detail: e?.message || JSON.stringify(e) })
     }
   }
 
@@ -22,7 +25,9 @@ module.exports = async (req, res) => {
       return res.json(entry)
     } catch (e) {
       console.error('[journal POST] 错误：', e)
-      return res.status(500).json({ error: '保存日记失败', detail: String(e) })
+      return res
+        .status(500)
+        .json({ error: '保存日记失败', detail: e?.message || JSON.stringify(e) })
     }
   }
 

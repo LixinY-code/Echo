@@ -1,5 +1,5 @@
 // GET /api/insights —— 个人洞察周报（CommonJS）
-const { getInsightsData } = require('../lib/store')
+const { getInsightsData, ensureUser } = require('../lib/store')
 
 module.exports = async (req, res) => {
   if (req.method !== 'GET') {
@@ -7,10 +7,13 @@ module.exports = async (req, res) => {
   }
   try {
     const userId = req.headers['x-user-id'] || 'anonymous'
-    const data = await getInsightsData(userId)
+    const uid = await ensureUser(userId)
+    const data = await getInsightsData(uid)
     res.json(data)
   } catch (e) {
     console.error('[insights] 错误：', e)
-    res.status(500).json({ error: '获取洞察失败', detail: String(e) })
+    res
+      .status(500)
+      .json({ error: '获取洞察失败', detail: e?.message || JSON.stringify(e) })
   }
 }

@@ -34,10 +34,23 @@ function gardenStage(count: number): {
   return { stage: 'flower', label: '悄悄开花了', hint: '这些小小的坚持，会变成光' }
 }
 
+/** 预设现实任务：明确的"小事"定义，用户选完成的（信任制，不强制判定） */
+const REALITY_QUESTS: { id: string; label: string; hint: string }[] = [
+  { id: 'msg-friend', label: '给朋友发条消息', hint: '哪怕只是一个表情' },
+  { id: 'walk-10min', label: '出门走 10 分钟', hint: '换个空气' },
+  { id: 'drink-water', label: '喝一杯水', hint: '身体的小事' },
+  { id: 'tidy-desk', label: '整理一下桌面', hint: '外在的秩序感' },
+  { id: 'three-good', label: '写下三件今天还行的事', hint: '不是感恩，是"还行"' },
+  { id: 'call-family', label: '给家人打个电话', hint: '不必长聊' },
+  { id: 'breath-exercise', label: '做一次 4-7-8 呼吸', hint: '4 秒吸 · 7 秒屏 · 8 秒呼' },
+  { id: 'sleep-early', label: '决定今晚早点休息', hint: '最难也最值得' },
+]
+
 export default function CornerPage() {
   const [insights, setInsights] = useState<Insights | null>(null)
   const [loading, setLoading] = useState(true)
   const [completing, setCompleting] = useState(false)
+  const [showPicker, setShowPicker] = useState(false)
   // 本地点击乐观增量（点击"我做了"后立即 +1，下次刷新 insights 覆盖）
   const [localBump, setLocalBump] = useState(0)
 
@@ -57,16 +70,20 @@ export default function CornerPage() {
     load()
   }, [load])
 
-  const handleComplete = useCallback(async () => {
-    if (completing) return
-    setCompleting(true)
-    try {
-      await completeQuest(crypto.randomUUID?.() ?? String(Date.now()))
-      setLocalBump((n) => n + 1)
-    } finally {
-      setCompleting(false)
-    }
-  }, [completing])
+  const handleCompleteQuest = useCallback(
+    async (questId: string) => {
+      if (completing) return
+      setCompleting(true)
+      try {
+        await completeQuest(questId)
+        setLocalBump((n) => n + 1)
+        setShowPicker(false)
+      } finally {
+        setCompleting(false)
+      }
+    },
+    [completing],
+  )
 
   const displayCount = (insights?.completedQuests ?? 0) + localBump
   const stage = gardenStage(displayCount)
@@ -97,13 +114,53 @@ export default function CornerPage() {
             variant="amber"
             size="sm"
             className="mt-6 !rounded-full"
-            onClick={handleComplete}
+            onClick={() => setShowPicker(true)}
             disabled={completing}
           >
             <HandDrawnIcon name="plus" className="h-4 w-4" />
-            {completing ? '记下中…' : '今天我做成了一件小事'}
+            今天我做成了一件小事
           </WarmButton>
         </div>
+
+        {/* ===== 任务选择弹层 ===== */}
+        {showPicker && (
+          <div
+            className="fixed inset-0 z-50 flex items-center justify-center bg-ink/30 px-5 backdrop-blur-sm"
+            onClick={() => setShowPicker(false)}
+          >
+            <div
+              className="w-full max-w-md rounded-3xl bg-cream p-6 shadow-soft-lg animate-fade-in-up"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <h3 className="font-hand text-2xl text-ink">今天，你做成了哪件小事？</h3>
+              <p className="mt-1 text-xs text-ink/50">
+                选一件你真的做了的。没有也没关系，关掉就好。
+              </p>
+              <div className="mt-4 grid grid-cols-1 gap-2">
+                {REALITY_QUESTS.map((q) => (
+                  <button
+                    key={q.id}
+                    onClick={() => handleCompleteQuest(q.id)}
+                    disabled={completing}
+                    className="flex items-center justify-between rounded-2xl border border-ink/10 bg-cream-50 px-4 py-3 text-left transition-all duration-300 ease-soft hover:border-amber/40 hover:bg-amber-light/20 disabled:opacity-50"
+                  >
+                    <span>
+                      <span className="block text-sm font-semibold text-ink">{q.label}</span>
+                      <span className="block text-xs text-ink/45">{q.hint}</span>
+                    </span>
+                    <HandDrawnIcon name="leaf" className="h-4 w-4 flex-shrink-0 text-sage" />
+                  </button>
+                ))}
+              </div>
+              <button
+                onClick={() => setShowPicker(false)}
+                className="mt-4 w-full rounded-2xl py-2 text-sm text-ink/45 transition-colors hover:text-ink"
+              >
+                今天没有，关掉
+              </button>
+            </div>
+          </div>
+        )}
 
         {/* ===== 统计卡片 ===== */}
         <div className="mt-10 grid grid-cols-3 gap-3">
