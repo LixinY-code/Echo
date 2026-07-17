@@ -47,6 +47,18 @@ create index if not exists idx_messages_user_time on messages(user_id, created_a
 create index if not exists idx_journals_user_time on journals(user_id, created_at desc);
 create index if not exists idx_quests_user_time on quests(user_id, created_at);
 
+-- 用户侧写（来自新用户引导问卷：昵称 / 性格 / 关键词标签）
+create table if not exists user_profiles (
+  user_id uuid primary key references users(id) on delete cascade,
+  nickname text,
+  personality text,            -- 'I' | 'E'，可为空（跳过）
+  tags text[] default '{}',    -- 自我描述关键词
+  onboarded boolean default false,
+  updated_at timestamptz default now()
+);
+
 -- 说明：
 -- 后端用 service_role key 访问，会绕过 RLS，因此无需额外配置 RLS policy。
 -- 如果你后续接入 Supabase 匿名登录，可再为 anon key 配置 RLS。
+-- 若已有 user_profiles 表，上面的 create if not exists 不会覆盖；如需补字段，
+-- 单独跑：alter table user_profiles add column if not exists tags text[] default '{}';

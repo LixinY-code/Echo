@@ -288,5 +288,65 @@ export function getLocalQuestCount(): number {
   return parseInt(localStorage.getItem(QUEST_KEY) || '0', 10)
 }
 
+/* ============================================================
+ * 新用户引导问卷（Onboarding）
+ * ============================================================ */
+
+const ONBOARDED_KEY = 'echo_onboarded'
+const PROFILE_KEY = 'echo_profile'
+
+/** 用户侧写（来自引导问卷，后续用于个性化） */
+export interface UserProfile {
+  nickname?: string
+  personality?: 'I' | 'E'
+  tags: string[]
+}
+
+/** 是否已完成引导（本地标记，快速判断，避免每次进都要查后端） */
+export function isOnboarded(): boolean {
+  try {
+    return localStorage.getItem(ONBOARDED_KEY) === 'true'
+  } catch {
+    return false
+  }
+}
+
+/** 保存引导问卷结果（先存本地标记，真实模式再存后端；后端失败不阻塞） */
+export async function saveOnboarding(data: UserProfile): Promise<void> {
+  try {
+    localStorage.setItem(ONBOARDED_KEY, 'true')
+    localStorage.setItem(PROFILE_KEY, JSON.stringify(data))
+  } catch {
+    /* ignore */
+  }
+  if (!USE_MOCK) {
+    try {
+      await request('/onboarding', {
+        method: 'POST',
+        body: JSON.stringify(data),
+      })
+    } catch (e) {
+      console.warn('[onboarding] 后端保存失败，已存本地：', e)
+    }
+  }
+}
+
+/** 读取用户侧写（mock 读 localStorage，真实读后端） */
+export async function getProfile(): Promise<UserProfile | null> {
+  if (USE_MOCK) {
+    try {
+      const raw = localStorage.getItem(PROFILE_KEY)
+      return raw ? (JSON.parse(raw) as UserProfile) : null
+    } catch {
+      return null
+    }
+  }
+  try {
+    return await request<UserProfile>('/profile')
+  } catch {
+    return null
+  }
+}
+
 /** 导出 mock 状态，便于调试 */
 export const apiDebug = { USE_MOCK, BASE_URL }
