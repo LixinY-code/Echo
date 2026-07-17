@@ -1,15 +1,15 @@
-import type { VercelRequest, VercelResponse } from '@vercel/node'
-import { generateReply } from '../lib/deepseek'
-import { ensureUser, saveMessage } from '../lib/store'
+// POST /api/chat —— 发送消息，返回回复 + mirror 面板（CommonJS）
+const crypto = require('crypto')
+const { generateReply } = require('../lib/deepseek')
+const { ensureUser, saveMessage } = require('../lib/store')
 
-/** POST /api/chat —— 发送消息，返回回复 + mirror 面板 */
-export default async function handler(req: VercelRequest, res: VercelResponse) {
+module.exports = async (req, res) => {
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed' })
   }
   try {
-    const { message, sessionId } = req.body as { message: string; sessionId?: string }
-    const userId = (req.headers['x-user-id'] as string) || 'anonymous'
+    const { message, sessionId } = req.body || {}
+    const userId = req.headers['x-user-id'] || 'anonymous'
     const sid = sessionId || crypto.randomUUID()
 
     const { reply, mirror } = await generateReply(message)

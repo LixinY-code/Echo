@@ -1,13 +1,12 @@
-import type { VercelRequest, VercelResponse } from '@vercel/node'
-import { generateLabVersions } from '../lib/deepseek'
+// POST /api/lab —— 同一问题的三种风格回复（CommonJS）
+const { generateLabVersions } = require('../lib/deepseek')
 
-/** POST /api/lab —— 同一问题的三种风格回复 */
-export default async function handler(req: VercelRequest, res: VercelResponse) {
+module.exports = async (req, res) => {
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed' })
   }
   try {
-    const { message } = req.body as { message: string }
+    const { message } = req.body || {}
     const versions = await generateLabVersions(message)
     res.json({ versions })
   } catch (e) {

@@ -1,10 +1,8 @@
-import type { VercelRequest, VercelResponse } from '@vercel/node'
-import { createJournal, getJournals, ensureUser } from '../lib/store'
-import type { Emotion } from '../src/types'
+// GET /api/journal 列表  ·  POST /api/journal 新建（CommonJS）
+const { createJournal, getJournals, ensureUser } = require('../lib/store')
 
-/** GET /api/journal 列表  ·  POST /api/journal 新建 */
-export default async function handler(req: VercelRequest, res: VercelResponse) {
-  const userId = (req.headers['x-user-id'] as string) || 'anonymous'
+module.exports = async (req, res) => {
+  const userId = req.headers['x-user-id'] || 'anonymous'
 
   if (req.method === 'GET') {
     try {
@@ -12,13 +10,13 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       return res.json(list)
     } catch (e) {
       console.error('[journal GET] 错误：', e)
-      return res.status(500).json({ error: '获取日记失败' })
+      return res.status(500).json({ error: '获取日记失败', detail: String(e) })
     }
   }
 
   if (req.method === 'POST') {
     try {
-      const { content, emotion } = req.body as { content: string; emotion: Emotion }
+      const { content, emotion } = req.body || {}
       const uid = await ensureUser(userId)
       const entry = await createJournal(uid, content, emotion)
       return res.json(entry)
