@@ -47,18 +47,25 @@ create index if not exists idx_messages_user_time on messages(user_id, created_a
 create index if not exists idx_journals_user_time on journals(user_id, created_at desc);
 create index if not exists idx_quests_user_time on quests(user_id, created_at);
 
--- 用户侧写（来自新用户引导问卷：昵称 / 性格 / 关键词标签）
+-- 用户侧写（来自新用户引导问卷 + 每次对话累积的长期记忆）
 create table if not exists user_profiles (
   user_id uuid primary key references users(id) on delete cascade,
   nickname text,
   personality text,            -- 'I' | 'E'，可为空（跳过）
-  tags text[] default '{}',    -- 自我描述关键词
+  tags text[] default '{}',    -- 自我描述关键词（来自问卷）
   onboarded boolean default false,
+  -- 长期记忆侧写（每次对话后由 DeepSeek profile_update 累积）
+  known_topics text[] default '{}',      -- 已知关注话题（去重累积，最多 20）
+  last_emotion text,                     -- 上次主要情绪
+  detected_scenario text,                -- 上次场景（学业/职业/心理/社交/考试）
+  interaction_count int default 0,       -- 累计对话次数
+  profile_insights text[] default '{}',  -- 累积洞察（最多 10 条）
   updated_at timestamptz default now()
 );
 
--- 说明：
--- 后端用 service_role key 访问，会绕过 RLS，因此无需额外配置 RLS policy。
--- 如果你后续接入 Supabase 匿名登录，可再为 anon key 配置 RLS。
--- 若已有 user_profiles 表，上面的 create if not exists 不会覆盖；如需补字段，
--- 单独跑：alter table user_profiles add column if not exists tags text[] default '{}';
+-- 若 user_profiles 表已存在（旧版只有 nickname/personality/tags），补字段：
+alter table user_profiles add column if not exists known_topics text[] default '{}';
+alter table user_profiles add column if not exists last_emotion text;
+alter table user_profiles add column if not exists detected_scenario text;
+alter table user_profiles add column if not exists interaction_count int default 0;
+alter table user_profiles add column if not exists profile_insights text[] default '{}';
