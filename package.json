@@ -2,7 +2,6 @@
   "name": "echo",
   "private": true,
   "version": "0.1.0",
-  "type": "module",
   "description": "Echo — 一个面向深夜孤独大学生的 AI 陪伴素养平台",
   "scripts": {
     "dev": "vite",
