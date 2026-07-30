@@ -1,6 +1,6 @@
 /**
  * 全局应用状态
- * 用 React Context 管理：当前会话 ID、完成的 quest 计数等
+ * 用 React Context 管理：当前会话 ID、完成的 quest 计数、侧边栏状态等
  */
 import { createContext, useContext, useState, useCallback, type ReactNode } from 'react'
 import { getLocalQuestCount } from '@/services/api'
@@ -14,6 +14,15 @@ interface AppState {
   questCount: number
   refreshQuestCount: () => void
   bumpQuestCount: () => void
+
+  /** 侧边栏展开状态 */
+  sidebarOpen: boolean
+  setSidebarOpen: (open: boolean) => void
+  toggleSidebar: () => void
+
+  /** 当前选中的多会话 ID（用于切换历史对话） */
+  activeChatId: string | null
+  setActiveChatId: (id: string | null) => void
 }
 
 const AppContext = createContext<AppState | null>(null)
@@ -21,6 +30,8 @@ const AppContext = createContext<AppState | null>(null)
 export function AppProvider({ children }: { children: ReactNode }) {
   const [sessionId, setSessionId] = useState<string | null>(null)
   const [questCount, setQuestCount] = useState<number>(getLocalQuestCount())
+  const [sidebarOpen, setSidebarOpen] = useState(false)
+  const [activeChatId, setActiveChatId] = useState<string | null>(null)
 
   const refreshQuestCount = useCallback(() => {
     setQuestCount(getLocalQuestCount())
@@ -30,9 +41,24 @@ export function AppProvider({ children }: { children: ReactNode }) {
     setQuestCount((c) => c + 1)
   }, [])
 
+  const toggleSidebar = useCallback(() => {
+    setSidebarOpen((prev) => !prev)
+  }, [])
+
   return (
     <AppContext.Provider
-      value={{ sessionId, setSessionId, questCount, refreshQuestCount, bumpQuestCount }}
+      value={{
+        sessionId,
+        setSessionId,
+        questCount,
+        refreshQuestCount,
+        bumpQuestCount,
+        sidebarOpen,
+        setSidebarOpen,
+        toggleSidebar,
+        activeChatId,
+        setActiveChatId,
+      }}
     >
       {children}
     </AppContext.Provider>

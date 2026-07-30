@@ -77,3 +77,34 @@ export interface ChatResponse {
 export interface QuestCompleteResponse {
   success: boolean
 }
+
+/* ============================================================
+ * 会话（Session）—— 多会话管理
+ * ============================================================ */
+
+/** 聊天会话 */
+export interface ChatSession {
+  id: string
+  title: string
+  createdAt: string // ISO
+  updatedAt?: string
+  messageCount: number
+  summary?: string | null
+}
+
+/** 会话列表响应 */
+export interface SessionsResponse {
+  sessions: ChatSession[]
+}
+
+/** 会话消息加载响应 */
+export interface SessionMessagesResponse {
+  sessionId: string
+  messages: ChatMessage[]
+}
+
+/** 会话总结响应 */
+export interface SessionSummaryResponse {
+  summary: string
+  summarized: boolean
+}

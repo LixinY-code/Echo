@@ -29,6 +29,10 @@ export type IconName =
   | 'sparkle'
   | 'eye'
   | 'compass'
+  | 'chat-bubble'
+  | 'panel-left-close'
+  | 'menu'
+  | 'spinner'
 
 interface Props {
   name: IconName
@@ -191,6 +195,31 @@ const PATHS: Record<IconName, ReactNode> = {
     <>
       <circle cx="12" cy="12" r="8.5" />
       <path d="M15.5 8.5l-2 5-5 2 2-5z" />
+    </>
+  ),
+  // 聊天气泡
+  'chat-bubble': (
+    <>
+      <path d="M4 6a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H9l-4 3v-3a2 2 0 0 1-1-1.83V6z" />
+    </>
+  ),
+  // 收起侧边栏
+  'panel-left-close': (
+    <>
+      <path d="M4 4h7a1 1 0 0 1 1 1v14a1 1 0 0 1-1 1H4z" />
+      <path d="M15 10l3 2-3 2" />
+    </>
+  ),
+  // 菜单（三条横线）
+  menu: (
+    <>
+      <path d="M4 6h16M4 12h16M4 18h16" />
+    </>
+  ),
+  // 加载旋转
+  spinner: (
+    <>
+      <path d="M12 3a9 9 0 1 0 9 9" strokeLinecap="round" strokeWidth={2.5} />
     </>
   ),
 }

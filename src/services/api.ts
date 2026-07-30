@@ -15,6 +15,11 @@ import type {
   LabVersion,
   QuestCompleteResponse,
   Emotion,
+  ChatMessage,
+  ChatSession,
+  SessionsResponse,
+  SessionMessagesResponse,
+  SessionSummaryResponse,
 } from '@/types'
 import { genId } from '@/utils/time'
 
@@ -350,3 +355,110 @@ export async function getProfile(): Promise<UserProfile | null> {
 
 /** 导出 mock 状态，便于调试 */
 export const apiDebug = { USE_MOCK, BASE_URL }
+
+/* ============================================================
+ * 会话（Session）管理 API
+ * ============================================================ */
+
+const SESSIONS_KEY = 'echo_sessions' // mock 会话列表缓存
+
+/** 获取会话列表 */
+export async function getSessions(): Promise<ChatSession[]> {
+  if (USE_MOCK) {
+    await delay(300)
+    try {
+      const raw = localStorage.getItem(SESSIONS_KEY)
+      if (raw) return JSON.parse(raw)
+    } catch { /* ignore */ }
+    // 初始示例
+    const seed: ChatSession[] = [
+      { id: genId(), title: '关于论文的焦虑', createdAt: new Date(Date.now() - 3600000).toISOString(), messageCount: 8, summary: '聊了论文进度的焦虑，用户感到自我怀疑但也在尝试调整。' },
+      { id: genId(), title: '深夜的迷茫', createdAt: new Date(Date.now() - 86400000).toISOString(), messageCount: 12, summary: '关于未来方向的困惑，涉及职业选择和兴趣平衡。' },
+    ]
+    localStorage.setItem(SESSIONS_KEY, JSON.stringify(seed))
+    return seed
+  }
+  const res = await request<SessionsResponse>('/sessions', { method: 'GET' })
+  return res.sessions
+}
+
+/** 新建会话 */
+export async function createSession(title?: string): Promise<ChatSession> {
+  if (USE_MOCK) {
+    await delay(200)
+    const session: ChatSession = {
+      id: genId(),
+      title: title || '新的对话',
+      createdAt: new Date().toISOString(),
+      messageCount: 0,
+      summary: null,
+    }
+    // 更新本地缓存
+    const list = await getSessions()
+    list.unshift(session)
+    try { localStorage.setItem(SESSIONS_KEY, JSON.stringify(list)) } catch { /* ignore */ }
+    return session
+  }
+  return request<ChatSession>('/sessions', {
+    method: 'POST',
+    body: JSON.stringify({ title }),
+  })
+}
+
+/** 获取会话消息历史 */
+export async function getSessionMessages(sessionId: string): Promise<ChatMessage[] | null> {
+  if (USE_MOCK) {
+    await delay(300)
+    // mock：返回空数组表示新会话，或模拟旧会话数据
+    return null // 前端会在 null 时显示空白开场白
+  }
+  try {
+    const res = await request<SessionMessagesResponse>(`/sessions/${sessionId}`, { method: 'GET' })
+    return res.messages
+  } catch {
+    return null
+  }
+}
+
+/** 更新会话标题 */
+export async function updateSessionTitle(sessionId: string, title: string): Promise<void> {
+  if (USE_MOCK) {
+    await delay(150)
+    const list = await getSessions()
+    const s = list.find((x) => x.id === sessionId)
+    if (s) s.title = title
+    try { localStorage.setItem(SESSIONS_KEY, JSON.stringify(list)) } catch { /* ignore */ }
+    return
+  }
+  await request(`/sessions/${sessionId}/title`, {
+    method: 'PUT',
+    body: JSON.stringify({ title }),
+  })
+}
+
+/** 删除会话 */
+export async function deleteSession(sessionId: string): Promise<void> {
+  if (USE_MOCK) {
+    await delay(200)
+    const list = (await getSessions()).filter((s) => s.id !== sessionId)
+    try { localStorage.setItem(SESSIONS_KEY, JSON.stringify(list)) } catch { /* ignore */ }
+    return
+  }
+  await request(`/sessions/${sessionId}`, { method: 'DELETE' })
+}
+
+/** 触发 AI 总结会话 */
+export async function summarizeSession(sessionId: string): Promise<string | null> {
+  if (USE_MOCK) {
+    await delay(600)
+    return '一次关于「' + (sessionId.slice(0, 6)) + '」的温暖对话。'
+  }
+  try {
+    const res = await request<SessionSummaryResponse>(`/sessions/${sessionId}/summary`, {
+      method: 'POST',
+    })
+    return res.summary
+  } catch {
+    return null
+  }
+}
