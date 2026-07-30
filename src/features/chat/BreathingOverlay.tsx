@@ -148,12 +148,28 @@ export default function BreathingOverlay({ onClose }: Props) {
             </p>
           )}
 
-          <button
-            onClick={onClose}
-            className="rounded-2xl px-5 py-2 text-sm font-medium text-ink/55 transition-colors duration-300 hover:bg-ink/5 hover:text-ink"
-          >
-            继续聊天
-          </button>
+          <div className="flex items-center gap-3">
+            <button
+              onClick={onClose}
+              className="rounded-2xl px-5 py-2 text-sm font-medium text-ink/55 transition-colors duration-300 hover:bg-ink/5 hover:text-ink"
+            >
+              继续聊天
+            </button>
+            <button
+              onClick={() => {
+                if (navigator.share) {
+                  navigator
+                    .share({ title: 'Echo · 呼吸引导', text: '在 Echo 跟着圆圈呼吸，很平静。' })
+                    .catch(() => {})
+                } else {
+                  alert('请截图分享给朋友～')
+                }
+              }}
+              className="rounded-2xl px-5 py-2 text-sm font-medium text-ink/55 transition-colors duration-300 hover:bg-ink/5 hover:text-ink"
+            >
+              转发截图
+            </button>
+          </div>
         </div>
       </div>
     </div>

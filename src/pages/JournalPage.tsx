@@ -115,7 +115,7 @@ export default function JournalPage() {
             onChange={(e) => setDraft(e.target.value)}
             autoFocus
             rows={10}
-            placeholder="把心里的话慢慢写下来……这里只有你自己能看到。"
+            placeholder="把心里的话慢慢写下来……这里只有你能看到。"
             className="w-full resize-none rounded-2xl border border-ink/8 bg-cream-50/60 bg-paper-lines p-4 text-[15px] leading-7 text-ink placeholder:text-ink/35 focus:border-amber/40 focus:outline-none focus:ring-2 focus:ring-amber/20"
           />
 
