@@ -168,21 +168,11 @@ export default function CornerPage() {
 
         {/* ===== 统计卡片 ===== */}
         <div className="mt-10 grid grid-cols-3 gap-3">
-          {/* 第一格：技能枝条（替代纯数字"任务"） */}
-          <div
-            className="warm-card relative flex flex-col items-center p-4 text-center animate-fade-in-up"
-            style={{ animationDelay: '0ms', overflow: 'visible' }}
-          >
-            <SkillBranch count={displayCount} loading={loading} />
-            <span className="mt-1 text-[11px] leading-tight text-ink/55">
-              本周完成的任务
-            </span>
-          </div>
-          {stats.slice(1).map((s, i) => (
+          {stats.map((s, i) => (
             <div
               key={s.label}
               className="warm-card flex flex-col items-center p-4 text-center animate-fade-in-up"
-              style={{ animationDelay: `${(i + 1) * 90}ms` }}
+              style={{ animationDelay: `${i * 90}ms` }}
             >
               <span className="mb-2 text-amber">
                 <HandDrawnIcon name={s.icon} className="h-6 w-6" />
@@ -215,88 +205,68 @@ export default function CornerPage() {
 /* ============ 手绘小花园（根据阶段切换） ============ */
 function Garden({ stage }: { stage: string }) {
   return (
-    <div className="relative h-40 w-48">
-      {/* 玫瑰阶段：写实风格图片取代 SVG 花朵 */}
-      {stage === 'flower' ? (
-        <div className="absolute inset-0 flex items-center justify-center">
-          <img
-            src="/rose.webp"
-            alt="成长之花"
-            draggable={false}
-            className="h-40 w-40 select-none object-contain"
-            style={{
-              filter: 'drop-shadow(0 6px 18px rgba(74, 63, 53, 0.18))',
-              animation: 'roseSway 6s ease-in-out infinite',
-            }}
-          />
-        </div>
-      ) : (
-        <svg viewBox="0 0 160 140" className="h-full w-full" aria-hidden="true">
-          {/* 土壤 */}
-          <ellipse cx="80" cy="120" rx="55" ry="12" fill="#C9A26B" opacity="0.7" />
-          <path d="M30 118 Q80 112 130 118 L128 126 Q80 132 32 126 Z" fill="#9C7B4A" opacity="0.6" />
+    <svg viewBox="0 0 160 140" className="h-36 w-44" aria-hidden="true">
+      {/* 土壤 */}
+      <ellipse cx="80" cy="120" rx="55" ry="12" fill="#C9A26B" opacity="0.7" />
+      <path d="M30 118 Q80 112 130 118 L128 126 Q80 132 32 126 Z" fill="#9C7B4A" opacity="0.6" />
 
-          {stage === 'seed' && (
-            <g>
-              {/* 种子 */}
-              <ellipse cx="80" cy="112" rx="7" ry="5" fill="#7FA176" />
-              <path d="M80 107 Q82 102 78 99" fill="none" stroke="#A8C5A0" strokeWidth="2" />
-            </g>
-          )}
-
-          {stage === 'sprout' && (
-            <g>
-              {/* 嫩芽 */}
-              <path d="M80 116 L80 90" stroke="#7FA176" strokeWidth="3" strokeLinecap="round" />
-              <path d="M80 100 C72 96 70 88 76 84 C80 88 80 96 80 100Z" fill="#A8C5A0" />
-              <path d="M80 95 C88 91 90 84 84 80 C80 84 80 91 80 95Z" fill="#A8C5A0" />
-            </g>
-          )}
-
-          {stage === 'leaf' && (
-            <g>
-              <path d="M80 116 L80 70" stroke="#7FA176" strokeWidth="3" strokeLinecap="round" />
-              <path d="M80 100 C66 94 62 82 72 76 C78 84 80 94 80 100Z" fill="#A8C5A0" />
-              <path d="M80 88 C94 82 98 70 88 64 C82 72 80 82 80 88Z" fill="#A8C5A0" />
-              <path d="M80 75 C70 71 66 62 74 58 C78 64 80 71 80 75Z" fill="#CFE0C9" />
-            </g>
-          )}
-
-          {/* 太阳/月光 */}
-          <circle cx="130" cy="28" r="10" fill="#FFD699" opacity="0.5" />
-          <circle cx="130" cy="28" r="6" fill="#FFB347" opacity="0.6" />
-        </svg>
+      {stage === 'seed' && (
+        <g>
+          {/* 种子 */}
+          <ellipse cx="80" cy="112" rx="7" ry="5" fill="#7FA176" />
+          <path d="M80 107 Q82 102 78 99" fill="none" stroke="#A8C5A0" strokeWidth="2" />
+        </g>
       )}
-    </div>
-  )
-}
 
-/* ============ 技能枝条：每片叶子代表 1 个成就 ============ */
-function SkillBranch({ count, loading }: { count: number; loading: boolean }) {
-  return (
-    <div className="relative mb-1 h-20 w-full">
-      {/* 底层水彩枝条 */}
-      <img
-        src="/branch-skill.webp"
-        alt=""
-        draggable={false}
-        className="absolute left-1/2 top-1/2 h-24 w-24 -translate-x-1/2 -translate-y-1/2 select-none object-contain"
-        style={{
-          filter: 'drop-shadow(0 2px 6px rgba(74, 63, 53, 0.12))',
-          opacity: count === 0 ? 0.35 : 0.9,
-          transition: 'opacity 0.5s ease',
-        }}
-      />
-      {/* 前景数字 + 叶子点亮动画 */}
-      <div className="absolute inset-0 flex flex-col items-center justify-center">
-        <span
-          className="text-2xl font-extrabold text-ink"
-          style={{ animation: count > 0 ? 'leafPop 0.5s ease-out' : 'none' }}
-        >
-          {loading ? '–' : count}
-        </span>
-        <span className="text-[10px] text-ink/45">{count === 0 ? '还差一片叶' : '片叶子'}</span>
-      </div>
-    </div>
+      {stage === 'sprout' && (
+        <g>
+          {/* 嫩芽 */}
+          <path d="M80 116 L80 90" stroke="#7FA176" strokeWidth="3" strokeLinecap="round" />
+          <path d="M80 100 C72 96 70 88 76 84 C80 88 80 96 80 100Z" fill="#A8C5A0" />
+          <path d="M80 95 C88 91 90 84 84 80 C80 84 80 91 80 95Z" fill="#A8C5A0" />
+        </g>
+      )}
+
+      {stage === 'leaf' && (
+        <g>
+          <path d="M80 116 L80 70" stroke="#7FA176" strokeWidth="3" strokeLinecap="round" />
+          <path d="M80 100 C66 94 62 82 72 76 C78 84 80 94 80 100Z" fill="#A8C5A0" />
+          <path d="M80 88 C94 82 98 70 88 64 C82 72 80 82 80 88Z" fill="#A8C5A0" />
+          <path d="M80 75 C70 71 66 62 74 58 C78 64 80 71 80 75Z" fill="#CFE0C9" />
+        </g>
+      )}
+
+      {stage === 'flower' && (
+        <g>
+          <path d="M80 116 L80 55" stroke="#7FA176" strokeWidth="3" strokeLinecap="round" />
+          <path d="M80 98 C66 92 62 80 72 74 C78 82 80 92 80 98Z" fill="#A8C5A0" />
+          <path d="M80 82 C94 76 98 64 88 58 C82 66 80 76 80 82Z" fill="#A8C5A0" />
+          {/* 花 */}
+          <g transform="translate(80 50)">
+            {[0, 72, 144, 216, 288].map((deg) => (
+              <ellipse
+                key={deg}
+                cx="0"
+                cy="-11"
+                rx="6"
+                ry="9"
+                fill="#FFB347"
+                opacity="0.9"
+                transform={`rotate(${deg})`}
+              />
+            ))}
+            <circle cx="0" cy="0" r="5" fill="#FFD699" />
+          </g>
+          {/* 光点 */}
+          <circle cx="50" cy="40" r="1.5" fill="#FFD699" opacity="0.8" />
+          <circle cx="115" cy="55" r="1.2" fill="#FFD699" opacity="0.7" />
+          <circle cx="40" cy="70" r="1" fill="#FFD699" opacity="0.6" />
+        </g>
+      )}
+
+      {/* 太阳/月光 */}
+      <circle cx="130" cy="28" r="10" fill="#FFD699" opacity="0.5" />
+      <circle cx="130" cy="28" r="6" fill="#FFB347" opacity="0.6" />
+    </svg>
   )
 }
