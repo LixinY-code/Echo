@@ -69,3 +69,27 @@ alter table user_profiles add column if not exists last_emotion text;
 alter table user_profiles add column if not exists detected_scenario text;
 alter table user_profiles add column if not exists interaction_count int default 0;
 alter table user_profiles add column if not exists profile_insights text[] default '{}';
+
+-- 用户画像扩展字段（全量记录 + 行为分析）
+alter table user_profiles add column if not exists emotion_history jsonb default '[]';
+alter table user_profiles add column if not exists pattern_hints text[] default '{}';
+alter table user_profiles add column if not exists chat_preferences jsonb;
+alter table user_profiles add column if not exists first_seen_at timestamptz;
+alter table user_profiles add column if not exists last_active_at timestamptz;
+alter table user_profiles add column if not exists total_sessions int default 0;
+alter table user_profiles add column if not exists favorite_time_range jsonb;
+
+-- 会话表（每次新建聊天 = 一个 session，消息按 session_id 归档）
+create table if not exists sessions (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid references users(id) on delete cascade,
+  title text default '新的对话',
+  message_count int default 0,
+  summary text,
+  summarized_at timestamptz,
+  created_at timestamptz default now(),
+  updated_at timestamptz default now()
+);
+
+create index if not exists idx_sessions_user_updated on sessions(user_id, updated_at desc);
+create index if not exists idx_messages_session on messages(session_id);
