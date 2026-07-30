@@ -7,7 +7,37 @@
 const { ensureUser, createSession, getSessions, getSessionMessages, updateSessionTitle, updateSessionSummary, deleteSession } = require('../lib/store')
 const { generateSummary } = require('../lib/deepseek')
 
+/**
+ * 解析请求体（兼容 Verver Serverless Functions）
+ */
+async function parseBody(req) {
+  if (req.body && typeof req.body === 'object') {
+    return req.body
+  }
+  return new Promise((resolve, reject) => {
+    let body = ''
+    req.on('data', (chunk) => {
+      body += chunk.toString()
+      if (body.length > 1024 * 1024) {
+        reject(new Error('Request body too large'))
+        req.destroy()
+      }
+    })
+    req.on('end', () => {
+      try {
+        resolve(body ? JSON.parse(body) : {})
+      } catch (e) {
+        reject(new Error('Invalid JSON in request body'))
+      }
+    })
+    req.on('error', reject)
+  })
+}
+
 module.exports = async (req, res) => {
+  // 设置响应头
+  res.setHeader('Content-Type', 'application/json')
+
   const userId = req.headers['x-user-id'] || 'anonymous'
 
   try {
@@ -18,15 +48,21 @@ module.exports = async (req, res) => {
 
     // POST /api/sessions → 新建
     if (method === 'POST' && (pathname === '' || pathname === '/')) {
-      const uid = await ensureUser(userId)
-      const { title } = req.body || {}
+      const uid = await ensureUser(userId).catch(() => userId)
+      let body
+      try {
+        body = await parseBody(req)
+      } catch (e) {
+        return res.status(400).json({ error: '无效的请求数据' })
+      }
+      const { title } = body || {}
       const session = await createSession(uid, title)
       return res.json(session)
     }
 
     // GET /api/sessions → 列表
     if (method === 'GET' && (pathname === '' || pathname === '/')) {
-      const uid = await ensureUser(userId)
+      const uid = await ensureUser(userId).catch(() => userId)
       const list = await getSessions(uid)
       return res.json({ sessions: list })
     }
@@ -41,7 +77,7 @@ module.exports = async (req, res) => {
 
     // GET /api/sessions/:id → 会话消息
     if (method === 'GET' && rest === '') {
-      const uid = await ensureUser(userId)
+      const uid = await ensureUser(userId).catch(() => userId)
       const messages = await getSessionMessages(uid, sessionId)
       if (messages === null) {
         return res.status(404).json({ error: '会话不存在' })
@@ -51,7 +87,13 @@ module.exports = async (req, res) => {
 
     // PUT /api/sessions/:id/title → 更新标题
     if (method === 'PUT' && rest === '/title') {
-      const { title } = req.body || {}
+      let body
+      try {
+        body = await parseBody(req)
+      } catch (e) {
+        return res.status(400).json({ error: '无效的请求数据' })
+      }
+      const { title } = body || {}
       if (!title) return res.status(400).json({ error: 'title 必填' })
       await updateSessionTitle(sessionId, title)
       return res.json({ success: true })
@@ -59,14 +101,24 @@ module.exports = async (req, res) => {
 
     // DELETE /api/sessions/:id → 删除
     if (method === 'DELETE' && rest === '') {
-      const uid = await ensureUser(userId)
+      const uid = await ensureUser(userId).catch(() => userId)
       await deleteSession(uid, sessionId)
       return res.json({ success: true })
     }
 
     // POST /api/sessions/:id/summary → AI 总结
     if (method === 'POST' && rest === '/summary') {
-      const uid = await ensureUser(userId)
+      const uid = await ensureUser(userId).catch(() => userId)
+
+      // 检查环境变量
+      if (!process.env.DEEPSEEK_API_KEY) {
+        return res.status(500).json({
+          error: '服务配置错误：DeepSeek API Key 未设置',
+          summary: null,
+          summarized: false,
+        })
+      }
+
       const messages = await getSessionMessages(uid, sessionId)
       if (!messages || messages.length < 2) {
         return res.json({ summary: '对话太短，暂无总结。', summarized: false })
@@ -76,14 +128,23 @@ module.exports = async (req, res) => {
         .filter((m) => m.text)
         .map((m) => `${m.role === 'user' ? '用户' : 'Echo'}：${m.text}`)
         .join('\n')
-      const summary = await generateSummary(chatText)
-      await updateSessionSummary(sessionId, summary)
-      return res.json({ summary, summarized: true })
+      try {
+        const summary = await generateSummary(chatText)
+        await updateSessionSummary(sessionId, summary)
+        return res.json({ summary, summarized: true })
+      } catch (e) {
+        console.error('[sessions/summary] DeepSeek 失败：', e)
+        return res.json({
+          summary: '总结生成失败，请稍后重试。',
+          summarized: false,
+          error: e?.message || String(e),
+        })
+      }
     }
 
     return res.status(404).json({ error: '未找到路由' })
   } catch (e) {
     console.error('[sessions] 错误：', e)
-    res.status(500).json({ error: '操作失败', detail: String(e) })
+    res.status(500).json({ error: '操作失败', detail: e?.message || String(e) })
   }
 }
