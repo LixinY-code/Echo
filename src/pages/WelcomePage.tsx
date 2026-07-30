@@ -113,26 +113,17 @@ function DeskScene({ label }: { label: string }) {
         {/* 桌面 */}
         <path d="M60 320 L740 320 L780 400 L20 400 Z" fill="url(#desk)" opacity="0.7" />
 
-        {/* 台灯 */}
-        <g>
-          {/* 灯罩 */}
-          <path
-            d="M360 120 Q400 100 440 120 L430 175 Q400 185 370 175 Z"
-            fill="#FFB347"
-            opacity="0.9"
-          />
-          {/* 灯杆 */}
-          <path d="M400 175 L400 280" stroke="#4A3F35" strokeWidth="4" strokeLinecap="round" />
-          {/* 灯座 */}
-          <path d="M375 282 Q400 276 425 282 L420 292 Q400 296 380 292 Z" fill="#4A3F35" />
-          {/* 光线 */}
-          <path
-            d="M370 175 L300 300 M430 175 L500 300"
-            stroke="#FFD699"
-            strokeWidth="2"
-            opacity="0.4"
-          />
-        </g>
+        {/* 台灯（写实复古美式台灯 PNG） */}
+        <image
+          href="/lamp-vintage.webp"
+          x="300"
+          y="80"
+          width="200"
+          height="220"
+          preserveAspectRatio="xMidYMid meet"
+          opacity="0.95"
+          style={{ filter: 'drop-shadow(0 8px 24px rgba(255, 214, 153, 0.45))' }}
+        />
 
         {/* 摊开的书 */}
         <g opacity="0.8">

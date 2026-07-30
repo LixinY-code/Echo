@@ -32,6 +32,13 @@ export default function JournalPage() {
   const [draft, setDraft] = useState('')
   const [emotion, setEmotion] = useState<Emotion>('平静')
   const [saving, setSaving] = useState(false)
+  // 进入页面时的古书打开动画
+  const [showOpening, setShowOpening] = useState(true)
+
+  useEffect(() => {
+    const t = window.setTimeout(() => setShowOpening(false), 1500)
+    return () => clearTimeout(t)
+  }, [])
 
   const load = useCallback(async () => {
     setLoading(true)
@@ -74,73 +81,78 @@ export default function JournalPage() {
   /* ===== 编辑视图 ===== */
   if (editing) {
     return (
-      <div className="mx-auto max-w-2xl px-5 py-8">
-        <button
-          onClick={() => setEditing(false)}
-          className="mb-5 inline-flex items-center gap-1.5 text-sm text-ink/55 transition-colors hover:text-ink"
-        >
-          <HandDrawnIcon name="arrow-left" className="h-4 w-4" />
-          返回
-        </button>
+      <>
+        {showOpening && <JournalOpenOverlay />}
+        <div className="mx-auto max-w-2xl px-5 py-8">
+          <button
+            onClick={() => setEditing(false)}
+            className="mb-5 inline-flex items-center gap-1.5 text-sm text-ink/55 transition-colors hover:text-ink"
+          >
+            <HandDrawnIcon name="arrow-left" className="h-4 w-4" />
+            返回
+          </button>
 
-        <div className="paper-edge rounded-3xl p-6 shadow-soft">
-          <h2 className="mb-1 font-hand text-2xl text-ink/80">今天的一页</h2>
-          <p className="mb-5 text-xs text-ink/45">{formatDateCN(new Date())}</p>
+          <div className="paper-edge rounded-3xl p-6 shadow-soft">
+            <h2 className="mb-1 font-hand text-2xl text-ink/80">今天的一页</h2>
+            <p className="mb-5 text-xs text-ink/45">{formatDateCN(new Date())}</p>
 
-          {/* 情绪选择 */}
-          <p className="mb-2 text-sm font-semibold text-ink/65">此刻的心情是…</p>
-          <div className="mb-5 flex flex-wrap gap-2">
-            {EMOTIONS.map((e) => {
-              const active = emotion === e.value
-              return (
-                <button
-                  key={e.value}
-                  onClick={() => setEmotion(e.value)}
-                  className={[
-                    'inline-flex items-center gap-1.5 rounded-full px-3.5 py-1.5 text-sm font-medium transition-all duration-300 ease-soft hover:scale-[1.04]',
-                    active
-                      ? `${e.color} ring-2 ring-amber/40`
-                      : 'bg-cream-100 text-ink/55 hover:bg-cream-200',
-                  ].join(' ')}
-                >
-                  <HandDrawnIcon name={e.icon} className="h-3.5 w-3.5" />
-                  {e.value}
-                </button>
-              )
-            })}
-          </div>
+            {/* 情绪选择 */}
+            <p className="mb-2 text-sm font-semibold text-ink/65">此刻的心情是…</p>
+            <div className="mb-5 flex flex-wrap gap-2">
+              {EMOTIONS.map((e) => {
+                const active = emotion === e.value
+                return (
+                  <button
+                    key={e.value}
+                    onClick={() => setEmotion(e.value)}
+                    className={[
+                      'inline-flex items-center gap-1.5 rounded-full px-3.5 py-1.5 text-sm font-medium transition-all duration-300 ease-soft hover:scale-[1.04]',
+                      active
+                        ? `${e.color} ring-2 ring-amber/40`
+                        : 'bg-cream-100 text-ink/55 hover:bg-cream-200',
+                    ].join(' ')}
+                  >
+                    <HandDrawnIcon name={e.icon} className="h-3.5 w-3.5" />
+                    {e.value}
+                  </button>
+                )
+              })}
+            </div>
 
-          {/* 文本域 */}
-          <textarea
-            value={draft}
-            onChange={(e) => setDraft(e.target.value)}
-            autoFocus
-            rows={10}
-            placeholder="把心里的话慢慢写下来……这里只有你能看到。"
-            className="w-full resize-none rounded-2xl border border-ink/8 bg-cream-50/60 bg-paper-lines p-4 text-[15px] leading-7 text-ink placeholder:text-ink/35 focus:border-amber/40 focus:outline-none focus:ring-2 focus:ring-amber/20"
-          />
+            {/* 文本域 */}
+            <textarea
+              value={draft}
+              onChange={(e) => setDraft(e.target.value)}
+              autoFocus
+              rows={10}
+              placeholder="把心里的话慢慢写下来……这里只有你能看到。"
+              className="w-full resize-none rounded-2xl border border-ink/8 bg-cream-50/60 bg-paper-lines p-4 text-[15px] leading-7 text-ink placeholder:text-ink/35 focus:border-amber/40 focus:outline-none focus:ring-2 focus:ring-amber/20"
+            />
 
-          <div className="mt-5 flex justify-end gap-3">
-            <WarmButton variant="ghost" size="sm" onClick={() => setEditing(false)}>
-              不写了
-            </WarmButton>
-            <WarmButton
-              variant="amber"
-              size="sm"
-              onClick={handleSave}
-              disabled={!draft.trim() || saving}
-            >
-              {saving ? '收存中…' : '收存这一页'}
-            </WarmButton>
+            <div className="mt-5 flex justify-end gap-3">
+              <WarmButton variant="ghost" size="sm" onClick={() => setEditing(false)}>
+                不写了
+              </WarmButton>
+              <WarmButton
+                variant="amber"
+                size="sm"
+                onClick={handleSave}
+                disabled={!draft.trim() || saving}
+              >
+                {saving ? '收存中…' : '收存这一页'}
+              </WarmButton>
+            </div>
           </div>
         </div>
-      </div>
+      </>
     )
   }
 
   /* ===== 列表视图 ===== */
   return (
-    <div className="relative mx-auto max-w-2xl px-5 py-8">
+    <>
+      {showOpening && <JournalOpenOverlay />}
+      <div className="relative mx-auto max-w-2xl px-5 py-8">
       <BackButton />
       {/* 标题 */}
       <div className="mb-7 flex items-end justify-between">
@@ -211,6 +223,27 @@ export default function JournalPage() {
       <p className="mt-8 text-center text-xs text-ink/35">
         {entries.length > 0 ? `共 ${entries.length} 页 · 安静地陪你` : ''}
       </p>
+      </div>
+    </>
+  )
+}
+
+/** 古书打开动画 overlay：进入日记页时播放 1.5s */
+function JournalOpenOverlay() {
+  return (
+    <div
+      className="pointer-events-none fixed inset-0 z-[60] flex items-center justify-center journal-fade-out"
+      aria-hidden="true"
+    >
+      <div className="journal-open relative h-[55vh] max-h-[520px] w-[88vw] max-w-[760px]">
+        <img
+          src="/journal-book.webp"
+          alt=""
+          draggable={false}
+          className="h-full w-full select-none object-contain"
+          style={{ filter: 'drop-shadow(0 14px 36px rgba(74, 63, 53, 0.28))' }}
+        />
+      </div>
     </div>
   )
 }
