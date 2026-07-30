@@ -113,16 +113,16 @@ function DeskScene({ label }: { label: string }) {
         {/* 桌面 */}
         <path d="M60 320 L740 320 L780 400 L20 400 Z" fill="url(#desk)" opacity="0.7" />
 
-        {/* 台灯（写实复古美式台灯 PNG） */}
+        {/* 台灯（写实复古美式台灯 PNG）— 放在桌面右侧偏中，避免遮挡主按钮 */}
         <image
           href="/lamp-vintage.webp"
-          x="300"
-          y="80"
-          width="200"
-          height="220"
+          x="430"
+          y="195"
+          width="180"
+          height="200"
           preserveAspectRatio="xMidYMid meet"
           opacity="0.95"
-          style={{ filter: 'drop-shadow(0 8px 24px rgba(255, 214, 153, 0.45))' }}
+          style={{ filter: 'drop-shadow(0 6px 18px rgba(255, 214, 153, 0.5))' }}
         />
 
         {/* 摊开的书 */}

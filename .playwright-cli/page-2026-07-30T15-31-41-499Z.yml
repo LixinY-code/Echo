@@ -1,0 +1,21 @@
+- generic [ref=e3]:
+  - generic:
+    - img
+  - generic [ref=e4]:
+    - generic [ref=e5]:
+      - img [ref=e6]
+      - generic [ref=e8]: Echo
+    - paragraph [ref=e9]: 已经很晚了，世界安静下来。如果你需要陪伴，我在这里。
+    - paragraph [ref=e10]:
+      - text: 深夜里的一盏小台灯。
+      - text: 在这里，AI 会陪你说话，也会让你看见它如何说话。
+    - generic [ref=e11]:
+      - link "开始对话" [ref=e12] [cursor=pointer]:
+        - /url: /chat
+        - img [ref=e13]
+        - text: 开始对话
+      - link "写写日记" [ref=e17] [cursor=pointer]:
+        - /url: /journal
+        - img [ref=e18]
+        - text: 写写日记
+    - paragraph [ref=e22]: 这里没有评判，只有一盏亮着的小灯。
