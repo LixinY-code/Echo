@@ -94,7 +94,7 @@ export default function InsightsPage() {
   ]
 
   return (
-    <div className="mx-auto max-w-2xl px-5 py-8">
+    <div className="relative mx-auto max-w-2xl px-5 py-8">
       <BackButton />
       <div className="letter-paper relative overflow-hidden rounded-3xl p-7 shadow-soft sm:p-9">
         {/* 信纸顶部装饰 */}

@@ -22,25 +22,29 @@ const PHASE_TEXT: Record<Exclude<Phase, 'idle'>, string> = {
   exhale: '轻轻呼出',
 }
 
+/** 4-7-8 呼吸各阶段真实持续时间（ms），用于 setTimeout 控制节奏 */
 const PHASE_DURATION: Record<Exclude<Phase, 'idle'>, number> = {
   inhale: 4000,
   hold: 7000,
   exhale: 8000,
 }
 
+/** 呼吸圆圈 CSS transition 时长（ms）
+ *  - inhale/exhale 与阶段时长一致，圆圈跟随呼吸节奏缓动
+ *  - hold 用 200ms 快速定格：视觉上圆圈已经膨胀到最大，不需要 7s 的 transition
+ */
+const TRANSITION_DURATION: Record<Exclude<Phase, 'idle'>, number> = {
+  inhale: 4000,
+  hold: 200,
+  exhale: 8000,
+}
+
+/** 呼吸圆圈缩放比例：吸气膨胀、屏息保持、呼气缩小 */
 const SCALE: Record<Exclude<Phase, 'idle'>, number> = {
   inhale: 1.15,
   hold: 1.15,
   exhale: 0.78,
 }
-
-const DURATION: Record<Exclude<Phase, 'idle'>, number> = {
-  inhale: 4000,
-  hold: 200, // 屏息保持，过渡很短
-  exhale: 8000,
-}
-
-/** 一轮 19s，约 2 轮 ≈ 38s ≈ 30s 引导 */
 const TOTAL_CYCLES = 2
 
 export default function BreathingOverlay({ onClose }: Props) {
@@ -84,7 +88,7 @@ export default function BreathingOverlay({ onClose }: Props) {
   }, [breathing])
 
   const activeScale = phase !== 'idle' ? SCALE[phase] : 1
-  const activeDuration = phase !== 'idle' ? DURATION[phase] : 600
+  const activeDuration = phase !== 'idle' ? TRANSITION_DURATION[phase] : 600
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-ink/30 backdrop-blur-sm animate-fade-in">

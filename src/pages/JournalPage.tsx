@@ -140,7 +140,7 @@ export default function JournalPage() {
 
   /* ===== 列表视图 ===== */
   return (
-    <div className="mx-auto max-w-2xl px-5 py-8">
+    <div className="relative mx-auto max-w-2xl px-5 py-8">
       <BackButton />
       {/* 标题 */}
       <div className="mb-7 flex items-end justify-between">

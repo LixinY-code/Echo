@@ -97,8 +97,8 @@ export default function CornerPage() {
 
   return (
     <div className="min-h-[calc(100vh-61px)] bg-afternoon">
-<div className="mx-auto max-w-2xl px-5 py-9">
-      <BackButton />
+      <div className="relative mx-auto max-w-2xl px-5 py-9">
+        <BackButton />
       {/* 标题 */}
         <div className="mb-2 text-center">
           <h1 className="font-hand text-3xl text-ink">我的角落</h1>
