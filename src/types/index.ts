@@ -4,14 +4,16 @@
 
 /** AI 透明化面板数据 */
 export interface MirrorData {
-  /** 检测到的情绪信号关键词 */
+  /** 检测到的情绪信号关键词（可能含频率标注，如"焦虑（本周第3次）"） */
   signals: string[]
-  /** AI 使用的回应策略 */
+  /** AI 使用的回应策略（含画像引用说明） */
   strategy: string
   /** 可能忽略的视角 */
   blindspots: string[]
   /** 固定限制声明 */
   limitation: string
+  /** 可选：Echo 对该用户的画像上下文摘要（如对话次数、近期情绪趋势） */
+  profileContext?: string
 }
 
 /** 聊天消息 */

@@ -23,6 +23,32 @@ module.exports = async (req, res) => {
       profile,
     )
 
+    // 构建画像上下文（让前端 MirrorPanel 展示"我记得你…"）
+    let profileContext = null
+    if (profile && profile.interaction_count && profile.interaction_count > 0) {
+      const count = profile.interaction_count + 1 // 含本次
+      const parts = [`这是我们第 ${count} 次对话了`]
+      if (profile.nickname) parts.push(`，${profile.nickname}`)
+      if (profile.last_emotion) {
+        parts.push(`。上次你说的时候带着${profile.last_emotion}的情绪`)
+      }
+      // 检测情绪是否重复出现
+      const currentEmotion = profile_update?.emotion_signal
+      if (
+        currentEmotion &&
+        profile.last_emotion &&
+        currentEmotion === profile.last_emotion
+      ) {
+        parts.push(`，而这次我依然感受到了${currentEmotion}`)
+      }
+      // 如果有模式提示
+      if (profile.pattern_hints && profile.pattern_hints.length > 0) {
+        parts.push(`。我注意到你似乎${profile.pattern_hints[0]}`)
+      }
+      parts.push('。')
+      profileContext = parts.join('')
+    }
+
     // 存消息 + 更新侧写（失败不影响回复返回）
     try {
       await Promise.all([
@@ -34,7 +60,7 @@ module.exports = async (req, res) => {
       console.warn('[chat] 存储/侧写更新失败：', e)
     }
 
-    res.json({ reply, mirror, sessionId: sid })
+    res.json({ reply, mirror: { ...mirror, profileContext }, sessionId: sid })
   } catch (e) {
     console.error('[chat] 错误：', e)
     res.status(500).json({ error: '生成回复失败', detail: String(e) })
