@@ -10,6 +10,7 @@ import { getJournals, createJournal, deleteJournal } from '@/services/api'
 import { formatDateCN, formatTime } from '@/utils/time'
 import HandDrawnIcon, { type IconName } from '@/components/common/HandDrawnIcon'
 import WarmButton from '@/components/common/WarmButton'
+import BackButton from '@/components/common/BackButton'
 
 const EMOTIONS: { value: Emotion; icon: IconName; color: string }[] = [
   { value: '焦虑', icon: 'heart', color: 'bg-apricot-light text-ink' },
@@ -140,6 +141,7 @@ export default function JournalPage() {
   /* ===== 列表视图 ===== */
   return (
     <div className="mx-auto max-w-2xl px-5 py-8">
+      <BackButton />
       {/* 标题 */}
       <div className="mb-7 flex items-end justify-between">
         <div>

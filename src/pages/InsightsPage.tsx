@@ -8,6 +8,7 @@ import type { Insights } from '@/types'
 import { getInsights } from '@/services/api'
 import HandDrawnIcon, { type IconName } from '@/components/common/HandDrawnIcon'
 import WarmButton from '@/components/common/WarmButton'
+import BackButton from '@/components/common/BackButton'
 
 interface Row {
   icon: IconName
@@ -94,6 +95,7 @@ export default function InsightsPage() {
 
   return (
     <div className="mx-auto max-w-2xl px-5 py-8">
+      <BackButton />
       <div className="letter-paper relative overflow-hidden rounded-3xl p-7 shadow-soft sm:p-9">
         {/* 信纸顶部装饰 */}
         <div className="mb-6 flex items-center gap-2 text-amber">

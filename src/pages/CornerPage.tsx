@@ -14,6 +14,7 @@ import type { Insights } from '@/types'
 import { getInsights, completeQuest } from '@/services/api'
 import HandDrawnIcon, { type IconName } from '@/components/common/HandDrawnIcon'
 import WarmButton from '@/components/common/WarmButton'
+import BackButton from '@/components/common/BackButton'
 
 interface StatCard {
   icon: IconName
@@ -35,15 +36,15 @@ function gardenStage(count: number): {
 }
 
 /** 预设现实任务：明确的"小事"定义，用户选完成的（信任制，不强制判定） */
-const REALITY_QUESTS: { id: string; label: string; hint: string }[] = [
-  { id: 'msg-friend', label: '给朋友发条消息', hint: '哪怕只是一个表情' },
-  { id: 'walk-10min', label: '出门走 10 分钟', hint: '换个空气' },
-  { id: 'drink-water', label: '喝一杯水', hint: '身体的小事' },
-  { id: 'tidy-desk', label: '整理一下桌面', hint: '外在的秩序感' },
-  { id: 'three-good', label: '写下三件今天还行的事', hint: '不是感恩，是"还行"' },
-  { id: 'call-family', label: '给家人打个电话', hint: '不必长聊' },
-  { id: 'breath-exercise', label: '做一次 4-7-8 呼吸', hint: '4 秒吸 · 7 秒屏 · 8 秒呼' },
-  { id: 'sleep-early', label: '决定今晚早点休息', hint: '最难也最值得' },
+const REALITY_QUESTS: { id: string; label: string; hint: string; icon: IconName }[] = [
+  { id: 'msg-friend', label: '给朋友发条消息', hint: '哪怕只是一个表情', icon: 'heart' },
+  { id: 'walk-10min', label: '出门走 10 分钟', hint: '换个空气', icon: 'sun' },
+  { id: 'drink-water', label: '喝一杯水', hint: '身体的小事', icon: 'sparkle' },
+  { id: 'tidy-desk', label: '整理一下桌面', hint: '外在的秩序感', icon: 'compass' },
+  { id: 'three-good', label: '写下三件今天还行的事', hint: '不是感恩，是"还行"', icon: 'sprout' },
+  { id: 'call-family', label: '给家人打个电话', hint: '不必长聊', icon: 'flower' },
+  { id: 'breath-exercise', label: '做一次 4-7-8 呼吸', hint: '4 秒吸 · 7 秒屏 · 8 秒呼', icon: 'breath' },
+  { id: 'sleep-early', label: '决定今晚早点休息', hint: '最难也最值得', icon: 'moon' },
 ]
 
 export default function CornerPage() {
@@ -96,8 +97,9 @@ export default function CornerPage() {
 
   return (
     <div className="min-h-[calc(100vh-61px)] bg-afternoon">
-      <div className="mx-auto max-w-2xl px-5 py-9">
-        {/* 标题 */}
+<div className="mx-auto max-w-2xl px-5 py-9">
+      <BackButton />
+      {/* 标题 */}
         <div className="mb-2 text-center">
           <h1 className="font-hand text-3xl text-ink">我的角落</h1>
           <p className="mt-1 text-sm text-ink/55">这里记着你一点一点长大的痕迹。</p>
@@ -132,9 +134,9 @@ export default function CornerPage() {
               className="w-full max-w-md rounded-3xl bg-cream p-6 shadow-soft-lg animate-fade-in-up"
               onClick={(e) => e.stopPropagation()}
             >
-              <h3 className="font-hand text-2xl text-ink">今天，你做成了哪件小事？</h3>
+              <h3 className="font-hand text-2xl text-ink">今天我做成了一件小事</h3>
               <p className="mt-1 text-xs text-ink/50">
-                选一件你真的做了的。没有也没关系，关掉就好。
+                挑一件做着，让花长长一点
               </p>
               <div className="mt-4 grid grid-cols-1 gap-2">
                 {REALITY_QUESTS.map((q) => (
@@ -142,21 +144,23 @@ export default function CornerPage() {
                     key={q.id}
                     onClick={() => handleCompleteQuest(q.id)}
                     disabled={completing}
-                    className="flex items-center justify-between rounded-2xl border border-ink/10 bg-cream-50 px-4 py-3 text-left transition-all duration-300 ease-soft hover:border-amber/40 hover:bg-amber-light/20 disabled:opacity-50"
+                    className="flex items-center gap-3 rounded-2xl border border-ink/10 bg-cream-50 px-4 py-3 text-left transition-all duration-300 ease-soft hover:border-amber/40 hover:bg-amber-light/20 disabled:opacity-50"
                   >
-                    <span>
+                    <span className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full bg-apricot-light/60 text-amber">
+                      <HandDrawnIcon name={q.icon} className="h-5 w-5" />
+                    </span>
+                    <span className="min-w-0 flex-1">
                       <span className="block text-sm font-semibold text-ink">{q.label}</span>
                       <span className="block text-xs text-ink/45">{q.hint}</span>
                     </span>
-                    <HandDrawnIcon name="leaf" className="h-4 w-4 flex-shrink-0 text-sage" />
                   </button>
                 ))}
               </div>
               <button
                 onClick={() => setShowPicker(false)}
-                className="mt-4 w-full rounded-2xl py-2 text-sm text-ink/45 transition-colors hover:text-ink"
+                className="mt-4 w-full rounded-full bg-sage/80 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-sage"
               >
-                今天没有，关掉
+                好了
               </button>
             </div>
           </div>
