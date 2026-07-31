@@ -132,14 +132,14 @@ export default function CornerPage() {
       {/* ===== 主视觉区：情绪果树 + 生长花（对称排布）+ 标题 ===== */}
       <section className="relative mx-auto max-w-lg px-4 pt-4 pb-6">
         <div className="text-center">
-          {/* 对称布局：生长花（左） + 情绪果树（中/右） */}
-          <div className="flex items-center justify-center gap-3">
-            {/* 左侧：Garden 生长花（根据任务数显示阶段） */}
+          {/* 对称布局：生长花（左） + 情绪果树（右）—— 同尺寸 */}
+          <div className="flex items-center justify-center gap-4 sm:gap-6">
+            {/* 左侧：Garden 生长花（与树同级大小） */}
             <div className="flex-shrink-0">
               <Garden
                 questCount={data?.completedQuests ?? 0}
-                size="sm"
-                className="opacity-90 hover:opacity-100 transition-opacity"
+                size="xl"
+                className="opacity-90 hover:opacity-100 transition-opacity drop-shadow-sm"
               />
             </div>
 

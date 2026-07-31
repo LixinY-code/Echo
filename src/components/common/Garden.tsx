@@ -15,7 +15,7 @@ interface GardenProps {
   /** 已完成的任务数量 */
   questCount: number
   /** 尺寸规格 */
-  size?: 'sm' | 'md' | 'lg'
+  size?: 'sm' | 'md' | 'lg' | 'xl'
   className?: string
 }
 
@@ -45,11 +45,12 @@ const Garden: React.FC<GardenProps> = ({
   const stage = getStage(questCount)
   const { label } = STAGE_LABELS[stage]
 
-  // 尺寸规格
+  /** 尺寸规格 */
   const sizes = {
     sm: { width: 120, height: 105, className: 'h-24 w-28' },
     md: { width: 160, height: 140, className: 'h-36 w-44' },
     lg: { width: 200, height: 175, className: 'h-44 w-56' },
+    xl: { width: 380, height: 350, className: 'h-[260px] w-auto max-w-[280px]' }, // 与 EmotionTree xl 同级
   }
 
   const s = sizes[size]
