@@ -1,5 +1,5 @@
 /**
- * Sidebar — 聊天记录侧边栏（DeepSeek 风格）
+ * Sidebar — 聊天记录侧边栏（Echo v2.0 DeepSeek 风格）
  *
  * 功能：
  *  - 展示历史聊天会话列表（倒序，最近在前）
@@ -8,6 +8,11 @@
  *  - 点击切换会话
  *  - 删除会话
  *  - 显示总结预览
+ *
+ * v2.0 视觉更新：
+ *  - 浅杏色背景 + 白色选中态卡片
+ *  - 时间文字使用 hint 色
+ *  - 底部 Echo 小 Logo
  */
 import { useEffect, useState, useCallback } from 'react'
 import type { ChatSession } from '@/types'
@@ -17,6 +22,7 @@ import {
   deleteSession,
 } from '@/services/api'
 import HandDrawnIcon from '@/components/common/HandDrawnIcon'
+import EchoLogo from '@/components/common/EchoLogo'
 
 interface Props {
   /** 当前活跃会话 ID */
@@ -117,25 +123,25 @@ export default function Sidebar({
   if (!open) {
     return (
       <div className="flex h-full w-0 flex-col overflow-hidden transition-all duration-300 ease-soft">
-        {/* 浮动展开按钮 */}
+        {/* v2.0 浮动展开按钮（浅杏色） */}
         <button
           onClick={onToggle}
           aria-label="展开对话历史"
           title="对话历史"
-          className="fixed left-0 top-1/2 z-30 -translate-y-1/2 rounded-r-xl bg-cream-50 px-1 py-3 shadow-soft transition-all duration-200 hover:bg-amber-light/40 hover:shadow-glow"
+          className="fixed left-0 top-1/2 z-30 -translate-y-1/2 rounded-r-xl bg-apricot/60 px-1.5 py-3 shadow-soft transition-all duration-200 hover:bg-apricot hover:shadow-glow"
         >
-          <HandDrawnIcon name="chat-bubble" className="h-5 w-5 text-ink/50" />
+          <HandDrawnIcon name="chat-bubble" className="h-5 w-5 text-milkBrown" />
         </button>
       </div>
     )
   }
 
-  /* ===== 展开态 ===== */
+  /* ===== 展开态（v2.0 浅杏色背景） ===== */
   return (
-    <div className="flex h-full w-[260px] flex-shrink-0 flex-col border-r border-ink/6 bg-cream-50/80 backdrop-blur-sm transition-all duration-300 ease-soft">
+    <div className="flex h-full w-[260px] flex-shrink-0 flex-col border-r border-milkBrown/10 bg-apricot/20 backdrop-blur-sm transition-all duration-300 ease-soft">
       {/* 头部：标题 + 新建 + 收起 */}
-      <div className="flex items-center justify-between border-b border-ink/5 px-4 py-3">
-        <h2 className="text-sm font-semibold text-ink/70">对话记录</h2>
+      <div className="flex items-center justify-between border-b border-milkBrown/8 px-4 py-3">
+        <h2 className="text-sm font-semibold text-milkBrown">对话记录</h2>
         <div className="flex items-center gap-1">
           {/* 新建 */}
           <button
@@ -143,7 +149,7 @@ export default function Sidebar({
             disabled={creating}
             aria-label="新建对话"
             title="新建对话"
-            className="flex h-7 w-7 items-center justify-center rounded-lg text-ink/45 transition-all duration-200 hover:bg-apricot/20 hover:text-apricot disabled:opacity-40"
+            className="interactive-hover flex h-7 w-7 items-center justify-center rounded-lg text-milkBrown/50 transition-all duration-200 hover:bg-apricot/40 hover:text-milkBrown disabled:opacity-40"
           >
             <HandDrawnIcon
               name={creating ? 'spinner' : 'plus'}
@@ -155,7 +161,7 @@ export default function Sidebar({
             onClick={onToggle}
             aria-label="收起"
             title="收起"
-            className="flex h-7 w-7 items-center justify-center rounded-lg text-ink/45 transition-all duration-200 hover:bg-ink/5 hover:text-ink/70"
+            className="flex h-7 w-7 items-center justify-center rounded-lg text-milkBrown/40 transition-all duration-200 hover:bg-apricot/30 hover:text-milkBrown"
           >
             <HandDrawnIcon name="panel-left-close" className="h-4 w-4" />
           </button>
@@ -163,35 +169,39 @@ export default function Sidebar({
       </div>
 
       {/* 会话列表 */}
-      <div className="flex-1 overflow-y-auto px-2 py-2">
+      <div className="flex-1 overflow-y-auto px-3 py-2.5">
         {loading ? (
-          <div className="flex items-center justify-center py-8 text-xs text-ink/35">
+          <div className="flex items-center justify-center py-8 text-xs text-hint">
             加载中…
           </div>
         ) : sessions.length === 0 ? (
-          <div className="px-2 py-8 text-center text-xs text-ink/35 leading-relaxed">
-            还没有对话记录<br />
-            点上方 ➕ 开始吧
+          /* 空状态 */
+          <div className="px-2 py-10 text-center">
+            <EchoLogo size="sm" showText={false} className="mx-auto mb-3 h-16 w-auto opacity-40" />
+            <p className="text-xs leading-relaxed text-hint">
+              还没有对话记录<br />
+              点上方 ➕ 开始吧
+            </p>
           </div>
         ) : (
-          <div className="flex flex-col gap-0.5">
+          <div className="flex flex-col gap-1">
             {sessions.map((s) => {
               const isActive = s.id === activeSessionId
               return (
                 <button
                   key={s.id}
                   onClick={() => handleSelect(s.id)}
-                  className={`group relative flex w-full flex-col gap-0.5 rounded-xl px-3 py-2.5 text-left transition-all duration-200 ${
+                  className={`group relative flex w-full flex-col gap-1 rounded-xl px-3.5 py-2.5 text-left transition-all duration-200 ${
                     isActive
-                      ? 'bg-apricot/10 ring-1 ring-apricot/25'
-                      : 'hover:bg-ink/[0.03]'
+                      ? 'bg-white shadow-soft ring-1 ring-amber/20' // v2.0 白色卡片选中态
+                      : 'hover:bg-apricot/25' // 浅杏色 hover
                   }`}
                 >
                   {/* 标题行 */}
                   <div className="flex items-start justify-between gap-2">
                     <span
                       className={`line-clamp-1 flex-1 text-[13px] font-medium leading-tight ${
-                        isActive ? 'text-ink' : 'text-ink/65'
+                        isActive ? 'text-milkBrown' : 'text-milkBrown/70'
                       }`}
                     >
                       {s.title || '新的对话'}
@@ -210,8 +220,8 @@ export default function Sidebar({
                     </button>
                   </div>
 
-                  {/* 元信息行 */}
-                  <div className="flex items-center gap-2 text-[11px] text-ink/35">
+                  {/* 元信息行（v2.0 使用 hint 色） */}
+                  <div className="flex items-center gap-2 text-[11px] text-hint">
                     <span>{formatTime(s.createdAt)}</span>
                     {s.messageCount > 0 && (
                       <>
@@ -223,14 +233,14 @@ export default function Sidebar({
 
                   {/* 总结预览（有总结时显示） */}
                   {s.summary && (
-                    <p className="mt-0.5 line-clamp-2 text-[11px] leading-relaxed text-ink/30">
+                    <p className="mt-0.5 line-clamp-2 text-[11px] leading-relaxed text-hint/80">
                       {s.summary}
                     </p>
                   )}
 
-                  {/* 活跃指示条 */}
+                  {/* 活跃指示条（v2.0 使用 amber 色） */}
                   {isActive && (
-                    <div className="absolute left-0 top-1/2 h-5 w-[3px] -translate-y-1/2 rounded-full bg-apricot" />
+                    <div className="absolute left-0 top-1/2 h-5 w-[3px] -translate-y-1/2 rounded-full bg-amber" />
                   )}
                 </button>
               )
@@ -239,9 +249,9 @@ export default function Sidebar({
         )}
       </div>
 
-      {/* 底部：用户信息摘要（可选） */}
-      <div className="border-t border-ink/5 px-4 py-2.5">
-        <p className="text-[10px] text-ink/25">Echo · 深夜陪伴你</p>
+      {/* v2.0 底部：Echo 品牌 Logo */}
+      <div className="border-t border-milkBrown/8 px-4 py-3 text-center">
+        <EchoLogo size="sm" showText={true} className="mx-auto h-12 w-auto opacity-50 transition-opacity hover:opacity-80" />
       </div>
     </div>
   )

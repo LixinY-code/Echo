@@ -1,272 +1,136 @@
 /**
- * CornerPage — 我的角落
- * - 中央手绘小花园，根据完成的现实任务数呈现不同生长状态
- * - 卡片：本周任务数 / 日记数量 / 盲点次数
- * - 温暖总结文案
- * - 午后阳光渐变背景
- * - "我做了"按钮：完成现实任务，让花园生长
+ * CornerPage — "我的角落" 成长数据页（Echo v2.0）
  *
- * 任务数来自后端 /insights 的 completedQuests + 本地点击乐观增量，
- * 这样 mock 与真实模式都正确。
+ * 布局：上下流式居中布局，暖杏色柔和渐变背景
+ * 主视觉：大幅水彩情绪果树 + 数据卡片
  */
-import { useEffect, useState, useCallback } from 'react'
-import type { Insights } from '@/types'
-import { getInsights, completeQuest } from '@/services/api'
-import HandDrawnIcon, { type IconName } from '@/components/common/HandDrawnIcon'
-import WarmButton from '@/components/common/WarmButton'
-import BackButton from '@/components/common/BackButton'
+import { useEffect, useState } from 'react'
+import { getInsights } from '@/services/api'
+import HandDrawnIcon from '@/components/common/HandDrawnIcon'
+import EchoLogo from '@/components/common/EchoLogo'
 
-interface StatCard {
-  icon: IconName
-  label: string
-  value: number
-  unit: string
+interface Insights {
+  mainTheme: string
+  peakHours: string
+  dependencySign: string
+  reflection: string
+  completedQuests: number
+  journalCount: number
+  blindspotCount: number
 }
-
-/** 根据 quest 数量返回花园生长阶段 */
-function gardenStage(count: number): {
-  stage: string
-  label: string
-  hint: string
-} {
-  if (count <= 0) return { stage: 'seed', label: '一颗种子', hint: '一切才刚刚开始' }
-  if (count <= 2) return { stage: 'sprout', label: '冒出了嫩芽', hint: '你已经迈出了第一步' }
-  if (count <= 4) return { stage: 'leaf', label: '长出了叶子', hint: '正在悄悄扎根' }
-  return { stage: 'flower', label: '悄悄开花了', hint: '这些小小的坚持，会变成光' }
-}
-
-/** 预设现实任务：明确的"小事"定义，用户选完成的（信任制，不强制判定） */
-const REALITY_QUESTS: { id: string; label: string; hint: string; icon: IconName }[] = [
-  { id: 'msg-friend', label: '给朋友发条消息', hint: '哪怕只是一个表情', icon: 'heart' },
-  { id: 'walk-10min', label: '出门走 10 分钟', hint: '换个空气', icon: 'sun' },
-  { id: 'drink-water', label: '喝一杯水', hint: '身体的小事', icon: 'sparkle' },
-  { id: 'tidy-desk', label: '整理一下桌面', hint: '外在的秩序感', icon: 'compass' },
-  { id: 'three-good', label: '写下三件今天还行的事', hint: '不是感恩，是"还行"', icon: 'sprout' },
-  { id: 'call-family', label: '给家人打个电话', hint: '不必长聊', icon: 'flower' },
-  { id: 'breath-exercise', label: '做一次 4-7-8 呼吸', hint: '4 秒吸 · 7 秒屏 · 8 秒呼', icon: 'breath' },
-  { id: 'sleep-early', label: '决定今晚早点休息', hint: '最难也最值得', icon: 'moon' },
-]
 
 export default function CornerPage() {
-  const [insights, setInsights] = useState<Insights | null>(null)
+  const [data, setData] = useState<Insights | null>(null)
   const [loading, setLoading] = useState(true)
-  const [completing, setCompleting] = useState(false)
-  const [showPicker, setShowPicker] = useState(false)
-  // 本地点击乐观增量（点击"我做了"后立即 +1，下次刷新 insights 覆盖）
-  const [localBump, setLocalBump] = useState(0)
-
-  const load = useCallback(async () => {
-    setLoading(true)
-    try {
-      const d = await getInsights()
-      setInsights(d)
-    } catch {
-      /* ignore */
-    } finally {
-      setLoading(false)
-    }
-  }, [])
 
   useEffect(() => {
-    load()
-  }, [load])
-
-  const handleCompleteQuest = useCallback(
-    async (questId: string) => {
-      if (completing) return
-      setCompleting(true)
-      try {
-        await completeQuest(questId)
-        setLocalBump((n) => n + 1)
-        setShowPicker(false)
-      } finally {
-        setCompleting(false)
-      }
-    },
-    [completing],
-  )
-
-  const displayCount = (insights?.completedQuests ?? 0) + localBump
-  const stage = gardenStage(displayCount)
-
-  const stats: StatCard[] = [
-    { icon: 'leaf', label: '本周完成的任务', value: displayCount, unit: '件' },
-    { icon: 'journal', label: '记录的日记', value: insights?.journalCount ?? 0, unit: '页' },
-    { icon: 'eye', label: '发现的盲点', value: insights?.blindspotCount ?? 0, unit: '次' },
-  ]
+    getInsights()
+      .then(setData)
+      .catch((e) => console.warn('[corner] 加载洞察失败：', e))
+      .finally(() => setLoading(false))
+  }, [])
 
   return (
-    <div className="min-h-[calc(100vh-61px)] bg-afternoon">
-      <div className="relative mx-auto max-w-2xl px-5 py-9">
-        <BackButton />
-      {/* 标题 */}
-        <div className="mb-2 text-center">
-          <h1 className="font-hand text-3xl text-ink">我的角落</h1>
-          <p className="mt-1 text-sm text-ink/55">这里记着你一点一点长大的痕迹。</p>
-        </div>
+    <div className="min-h-[calc(100vh-61px)] bg-gradient-to-b from-cream to-apricot/30">
+      {/* 返回按钮 */}
+      <div className="mx-auto max-w-lg px-4 pt-4">
+        <button
+          onClick={() => window.history.back()}
+          aria-label="返回"
+          className="interactive-hover flex h-10 w-10 items-center justify-center rounded-full bg-white shadow-soft text-milkBrown transition-all duration-300"
+        >
+          <HandDrawnIcon name="arrow-left" className="h-5 w-5" />
+        </button>
+      </div>
 
-        {/* ===== 中央花园 ===== */}
-        <div className="mt-8 flex flex-col items-center">
-          <Garden stage={stage.stage} />
-          <p className="mt-4 font-hand text-2xl text-ink/80">{stage.label}</p>
-          <p className="mt-1 text-sm text-ink/45">{stage.hint}</p>
+      {/* ===== v2.0 主视觉区：水彩情绪果树 + 标题 ===== */}
+      <section className="relative mx-auto max-w-lg px-4 pt-6 pb-8">
+        {/* 水彩光晕效果容器 */}
+        <div className="watercolor-glow relative z-10 text-center">
+          {/* 大幅 Echo Logo（放大版） */}
+          <EchoLogo size="xl" showText={false} animated={true} className="mx-auto mb-4 h-48 w-auto drop-shadow-sm" />
 
-          {/* 我做了 按钮 */}
-          <WarmButton
-            variant="amber"
-            size="sm"
-            className="mt-6 !rounded-full"
-            onClick={() => setShowPicker(true)}
-            disabled={completing}
-          >
-            <HandDrawnIcon name="plus" className="h-4 w-4" />
-            今天我做成了一件小事
-          </WarmButton>
-        </div>
-
-        {/* ===== 任务选择弹层 ===== */}
-        {showPicker && (
-          <div
-            className="fixed inset-0 z-50 flex items-center justify-center bg-ink/30 px-5 backdrop-blur-sm"
-            onClick={() => setShowPicker(false)}
-          >
-            <div
-              className="w-full max-w-md rounded-3xl bg-cream p-6 shadow-soft-lg animate-fade-in-up"
-              onClick={(e) => e.stopPropagation()}
-            >
-              <h3 className="font-hand text-2xl text-ink">今天我做成了一件小事</h3>
-              <p className="mt-1 text-xs text-ink/50">
-                挑一件做着，让花长长一点
-              </p>
-              <div className="mt-4 grid grid-cols-1 gap-2">
-                {REALITY_QUESTS.map((q) => (
-                  <button
-                    key={q.id}
-                    onClick={() => handleCompleteQuest(q.id)}
-                    disabled={completing}
-                    className="flex items-center gap-3 rounded-2xl border border-ink/10 bg-cream-50 px-4 py-3 text-left transition-all duration-300 ease-soft hover:border-amber/40 hover:bg-amber-light/20 disabled:opacity-50"
-                  >
-                    <span className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full bg-apricot-light/60 text-amber">
-                      <HandDrawnIcon name={q.icon} className="h-5 w-5" />
-                    </span>
-                    <span className="min-w-0 flex-1">
-                      <span className="block text-sm font-semibold text-ink">{q.label}</span>
-                      <span className="block text-xs text-ink/45">{q.hint}</span>
-                    </span>
-                  </button>
-                ))}
-              </div>
-              <button
-                onClick={() => setShowPicker(false)}
-                className="mt-4 w-full rounded-full bg-sage/80 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-sage"
-              >
-                好了
-              </button>
-            </div>
-          </div>
-        )}
-
-        {/* ===== 统计卡片 ===== */}
-        <div className="mt-10 grid grid-cols-3 gap-3">
-          {stats.map((s, i) => (
-            <div
-              key={s.label}
-              className="warm-card flex flex-col items-center p-4 text-center animate-fade-in-up"
-              style={{ animationDelay: `${i * 90}ms` }}
-            >
-              <span className="mb-2 text-amber">
-                <HandDrawnIcon name={s.icon} className="h-6 w-6" />
-              </span>
-              <span className="text-2xl font-extrabold text-ink">{loading ? '–' : s.value}</span>
-              <span className="text-xs text-ink/45">{s.unit}</span>
-              <span className="mt-1.5 text-[11px] leading-tight text-ink/55">{s.label}</span>
-            </div>
-          ))}
-        </div>
-
-        {/* ===== 温暖总结 ===== */}
-        <div className="mt-8 rounded-3xl bg-cream-50/70 p-6 text-center shadow-soft">
-          <p className="font-hand text-xl leading-relaxed text-ink/80">
-            这一周，你 <span className="text-amber font-bold">{insights?.blindspotCount ?? 0}</span> 次
-            停下来看了看 AI 背后的机制。
-            <br />
-            那是你清醒的时刻。
+          {/* 标题组 */}
+          <h1 className="font-serif text-3xl font-bold italic text-milkBrown mb-2">
+            我的角落 🌱
+          </h1>
+          <p className="text-sm text-milkBrown/60 leading-relaxed">
+            这里记着你一点一点长大的痕迹。
           </p>
         </div>
 
-        <p className="mt-6 text-center text-xs text-ink/35">
-          花园会慢慢长，你也是。
+        {/* 中部文案 */}
+        <div className="mt-10 text-center">
+          <p className="text-xl font-semibold text-milkBrown mb-1.5">
+            悄悄开花了
+          </p>
+          <p className="text-sm text-hint">
+            这些小小的坚持，会变成光 ✨
+          </p>
+        </div>
+      </section>
+
+      {/* ===== v2.0 数据卡片（3 张等宽横向排列） ===== */}
+      <section className="mx-auto max-w-lg px-4 pb-8">
+        <div className="grid grid-cols-3 gap-3">
+          {/* 本周完成的任务 */}
+          <div className="interactive-hover warm-card p-4 text-center">
+            <div className="mb-2 flex justify-center">
+              <span className="flex h-10 w-10 items-center justify-center rounded-full bg-macaron-pink/20">
+                <HandDrawnIcon name="flower-red" className="h-5 w-5 text-macaron-pink" />
+              </span>
+            </div>
+            <p className="text-3xl font-extrabold text-milkBrown">
+              {loading ? '–' : data?.completedQuests ?? 0}
+            </p>
+            <p className="mt-1 text-[11px] text-hint">本周任务</p>
+          </div>
+
+          {/* 记录的日记 */}
+          <div className="interactive-hover warm-card p-4 text-center">
+            <div className="mb-2 flex justify-center">
+              <span className="flex h-10 w-10 items-center justify-center rounded-full bg-macaron-green/20">
+                <HandDrawnIcon name="sprout-green" className="h-5 w-5 text-macaron-green" />
+              </span>
+            </div>
+            <p className="text-3xl font-extrabold text-milkBrown">
+              {loading ? '–' : data?.journalCount ?? 0}
+            </p>
+            <p className="mt-1 text-[11px] text-hint">日记页</p>
+          </div>
+
+          {/* 发现的盲点 */}
+          <div className="interactive-hover warm-card p-4 text-center">
+            <div className="mb-2 flex justify-center">
+              <span className="flex h-10 w-10 items-center justify-center rounded-full bg-macaron-blue/20">
+                <HandDrawnIcon name="tree-eye" className="h-5 w-5 text-macaron-blue" />
+              </span>
+            </div>
+            <p className="text-3xl font-extrabold text-milkBrown">
+              {loading ? '–' : data?.blindspotCount ?? 0}
+            </p>
+            <p className="mt-1 text-[11px] text-hint">盲点数</p>
+          </div>
+        </div>
+      </section>
+
+      {/* ===== 操作按钮 ===== */}
+      <section className="mx-auto max-w-lg px-4 pb-8 text-center">
+        <button
+          onClick={() => { alert('记录功能开发中 💡') }}
+          className="interactive-hover inline-flex items-center gap-2 rounded-full bg-amber px-6 py-3 text-base font-semibold text-white shadow-glow transition-all duration-300 ease-soft hover:bg-amber-light hover:text-milkBrown"
+        >
+          <HandDrawnIcon name="plus" className="h-5 w-5" />
+          今天我做成了一件小事
+        </button>
+      </section>
+
+      {/* ===== 底部收尾文案 ===== */}
+      <footer className="pb-12 text-center">
+        <p className="text-xs text-hint/70 italic">
+          这里没有评判，只有一盏亮着的小灯。💡
         </p>
-      </div>
+      </footer>
     </div>
-  )
-}
-
-/* ============ 手绘小花园（根据阶段切换） ============ */
-function Garden({ stage }: { stage: string }) {
-  return (
-    <svg viewBox="0 0 160 140" className="h-36 w-44" aria-hidden="true">
-      {/* 土壤 */}
-      <ellipse cx="80" cy="120" rx="55" ry="12" fill="#C9A26B" opacity="0.7" />
-      <path d="M30 118 Q80 112 130 118 L128 126 Q80 132 32 126 Z" fill="#9C7B4A" opacity="0.6" />
-
-      {stage === 'seed' && (
-        <g>
-          {/* 种子 */}
-          <ellipse cx="80" cy="112" rx="7" ry="5" fill="#7FA176" />
-          <path d="M80 107 Q82 102 78 99" fill="none" stroke="#A8C5A0" strokeWidth="2" />
-        </g>
-      )}
-
-      {stage === 'sprout' && (
-        <g>
-          {/* 嫩芽 */}
-          <path d="M80 116 L80 90" stroke="#7FA176" strokeWidth="3" strokeLinecap="round" />
-          <path d="M80 100 C72 96 70 88 76 84 C80 88 80 96 80 100Z" fill="#A8C5A0" />
-          <path d="M80 95 C88 91 90 84 84 80 C80 84 80 91 80 95Z" fill="#A8C5A0" />
-        </g>
-      )}
-
-      {stage === 'leaf' && (
-        <g>
-          <path d="M80 116 L80 70" stroke="#7FA176" strokeWidth="3" strokeLinecap="round" />
-          <path d="M80 100 C66 94 62 82 72 76 C78 84 80 94 80 100Z" fill="#A8C5A0" />
-          <path d="M80 88 C94 82 98 70 88 64 C82 72 80 82 80 88Z" fill="#A8C5A0" />
-          <path d="M80 75 C70 71 66 62 74 58 C78 64 80 71 80 75Z" fill="#CFE0C9" />
-        </g>
-      )}
-
-      {stage === 'flower' && (
-        <g>
-          <path d="M80 116 L80 55" stroke="#7FA176" strokeWidth="3" strokeLinecap="round" />
-          <path d="M80 98 C66 92 62 80 72 74 C78 82 80 92 80 98Z" fill="#A8C5A0" />
-          <path d="M80 82 C94 76 98 64 88 58 C82 66 80 76 80 82Z" fill="#A8C5A0" />
-          {/* 花 */}
-          <g transform="translate(80 50)">
-            {[0, 72, 144, 216, 288].map((deg) => (
-              <ellipse
-                key={deg}
-                cx="0"
-                cy="-11"
-                rx="6"
-                ry="9"
-                fill="#FFB347"
-                opacity="0.9"
-                transform={`rotate(${deg})`}
-              />
-            ))}
-            <circle cx="0" cy="0" r="5" fill="#FFD699" />
-          </g>
-          {/* 光点 */}
-          <circle cx="50" cy="40" r="1.5" fill="#FFD699" opacity="0.8" />
-          <circle cx="115" cy="55" r="1.2" fill="#FFD699" opacity="0.7" />
-          <circle cx="40" cy="70" r="1" fill="#FFD699" opacity="0.6" />
-        </g>
-      )}
-
-      {/* 太阳/月光 */}
-      <circle cx="130" cy="28" r="10" fill="#FFD699" opacity="0.5" />
-      <circle cx="130" cy="28" r="6" fill="#FFB347" opacity="0.6" />
-    </svg>
   )
 }

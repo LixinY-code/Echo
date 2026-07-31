@@ -2,15 +2,15 @@
 @tailwind components;
 @tailwind utilities;
 
-/* ============ 全局基础 ============ */
+/* ============ 全局基础（Echo v2.0 暖调纸质柔光） ============ */
 @layer base {
   :root {
     /* 字体相关 */
     --font-round: 'Nunito', 'PingFang SC', 'Microsoft YaHei', system-ui, sans-serif;
     --font-hand: 'Caveat', 'Nunito', cursive;
 
-    /* 标准阴影：所有卡片、按钮统一柔和阴影 */
-    --shadow-soft: 0 4px 20px rgba(0, 0, 0, 0.03);
+    /* 标准阴影：所有卡片、按钮统一柔和阴影（v2.0 奶棕色调） */
+    --shadow-soft: 0 4px 20px rgba(166, 124, 82, 0.08);
   }
 
   html {
@@ -20,13 +20,13 @@
   body {
     margin: 0;
     font-family: var(--font-round);
-    background-color: #fff8f0; /* 暖奶油色 */
-    color: #4a3f35; /* 深棕文字 */
+    background-color: #FFF9EF; /* v2.0 暖米白 */
+    color: #4a3f35; /* 深棕灰文字 */
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
-    /* 整体柔和氛围 */
+    /* 整体柔和氛围（v2.0 更新色调） */
     background-image:
-      radial-gradient(circle at 20% 10%, rgba(255, 179, 71, 0.06), transparent 40%),
+      radial-gradient(circle at 20% 10%, rgba(242, 184, 128, 0.07), transparent 40%),
       radial-gradient(circle at 85% 90%, rgba(168, 197, 160, 0.05), transparent 45%);
     min-height: 100vh;
   }
@@ -51,42 +51,52 @@
     background: transparent;
   }
   ::-webkit-scrollbar-thumb {
-    background: rgba(74, 63, 53, 0.15);
+    background: rgba(166, 124, 82, 0.15); /* v2.0 奶棕色调 */
     border-radius: 8px;
   }
   ::-webkit-scrollbar-thumb:hover {
-    background: rgba(74, 63, 53, 0.28);
+    background: rgba(166, 124, 82, 0.28);
   }
 
-  /* 选中文字颜色 */
+  /* 选中文字颜色（v2.0 使用新amber色） */
   ::selection {
-    background: rgba(255, 179, 71, 0.25);
+    background: rgba(242, 184, 128, 0.25);
     color: #4a3f35;
+  }
+
+  /* ✨ v2.0 新增：通用 hover 交互效果（可点击元素上移2px + 阴影加深） */
+  .interactive-hover {
+    transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1),
+                box-shadow 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+  .interactive-hover:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 24px rgba(166, 124, 82, 0.12);
   }
 }
 
 /* ============ 组件层：手作感工具类 ============ */
 @layer components {
-  /* 手撕纸张边缘效果：用多层 box-shadow 模拟不规整边缘 */
+  /* 手撕纸张边缘效果 */
   .paper-edge {
-    background-color: #fbf4e6;
+    background-color: #FFFBF5; /* v2.0 更新 */
     background-image: repeating-linear-gradient(
       transparent,
       transparent 27px,
       rgba(74, 63, 53, 0.07) 28px
     );
-    /* 不规则边缘 */
     -webkit-mask-image: radial-gradient(circle at 50% 50%, #000 98%, transparent 100%);
     mask-image: radial-gradient(circle at 50% 50%, #000 98%, transparent 100%);
     box-shadow:
-      0 4px 20px rgba(0, 0, 0, 0.03),
+      0 4px 20px rgba(166, 124, 82, 0.08), /* v2.0 奶棕色调 */
       inset 0 0 0 1px rgba(74, 63, 53, 0.04);
   }
 
   /* 信纸背景 */
   .letter-paper {
-    background-color: #fbf4e6;
+    background-color: #FFFBF5; /* v2.0 更新 */
     background-image: repeating-linear-gradient(
+      90deg,
       transparent,
       transparent 31px,
       rgba(74, 63, 53, 0.06) 32px
@@ -96,33 +106,69 @@
   /* 纸张模糊质感（Mirror 面板背景） */
   .paper-blur {
     backdrop-filter: blur(6px);
-    background-color: rgba(251, 244, 230, 0.82);
+    background-color: rgba(255, 251, 245, 0.82); /* v2.0 更新 */
   }
 
-  /* 暖光台灯氛围容器 */
+  /* 暖光台灯氛围容器（v2.0 更新色调） */
   .lamp-glow {
     background: radial-gradient(
       ellipse at 50% 0%,
-      rgba(255, 201, 113, 0.22),
+      rgba(242, 184, 128, 0.22), /* 新amber色 */
       transparent 60%
     );
   }
 
-  /* 通用柔和卡片 */
+  /* 通用柔和卡片（v2.0 更新） */
   .warm-card {
-    @apply bg-cream-50 rounded-3xl border border-ink/5 shadow-soft;
+    @apply bg-paper rounded-3xl border border-milkBrown/5 shadow-soft;
+  }
+
+  /* ✨ v2.0 新增：马卡龙果实颜色工具类 */
+  .text-macaron-orange { color: #FFB347; }
+  .text-macaron-pink { color: #FFB6C1; }
+  .text-macaron-purple { color: #DDA0DD; }
+  .text-macaron-yellow { color: #F0E68C; }
+  .text-macaron-green { color: #98FB98; }
+  .text-macaron-blue { color: #ADD8E6; }
+
+  .bg-macaron-orange { background-color: #FFB347; }
+  .bg-macaron-pink { background-color: #FFB6C1; }
+  .bg-macaron-purple { background-color: #DDA0DD; }
+  .bg-macaron-yellow { background-color: #F0E68C; }
+  .bg-macaron-green { background-color: #98FB98; }
+  .bg-macaron-blue { background-color: #ADD8E6; }
+
+  /* ✨ v2.0 新增：水彩光晕效果（我的角落页主视觉） */
+  .watercolor-glow {
+    position: relative;
+  }
+  .watercolor-glow::before {
+    content: '';
+    position: absolute;
+    top: -20%;
+    left: -10%;
+    right: -10%;
+    bottom: -20%;
+    background: radial-gradient(
+      ellipse at center,
+      rgba(242, 184, 128, 0.15) 0%,
+      rgba(255, 182, 193, 0.1) 30%,
+      transparent 70%
+    );
+    pointer-events: none;
+    z-index: 0;
   }
 }
 
 /* ============ 工具层 ============ */
 @layer utilities {
-  /* 文字逐行淡入：配合 inline style 的 animation-delay 使用 */
+  /* 文字逐行淡入 */
   .line-reveal {
     opacity: 0;
     animation: fadeInUp 0.7s cubic-bezier(0.4, 0, 0.2, 1) forwards;
   }
 
-  /* 隐藏滚动条（横向滑动卡片用） */
+  /* 隐藏滚动条 */
   .no-scrollbar {
     -ms-overflow-style: none;
     scrollbar-width: none;

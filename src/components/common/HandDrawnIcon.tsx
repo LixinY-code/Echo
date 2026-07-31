@@ -33,6 +33,10 @@ export type IconName =
   | 'panel-left-close'
   | 'menu'
   | 'spinner'
+  // v2.0 新增：我的角落页数据卡片图标
+  | 'flower-red'    // 红花（任务卡片）
+  | 'sprout-green'   // 嫩枝（日记卡片）
+  | 'tree-eye'      // 小树+眼睛（盲点卡片）
 
 interface Props {
   name: IconName
@@ -220,6 +224,42 @@ const PATHS: Record<IconName, ReactNode> = {
   spinner: (
     <>
       <path d="M12 3a9 9 0 1 0 9 9" strokeLinecap="round" strokeWidth={2.5} />
+    </>
+  ),
+  // ===== v2.0 新增图标 =====
+  // 红花（任务卡片）
+  'flower-red': (
+    <>
+      <path d="M12 15v5" />
+      <path d="M12 8c-3-1.5-4-4-3-6 2 1.5 3 3.5 3 6z" fill="currentColor" opacity="0.15" stroke="none" />
+      <circle cx="12" cy="7" r="2.5" />
+      <path d="M12 9.5c-2.5-1-3-3.5-2-5.5 1.5 1.5 2 3 2 5.5z" />
+      <path d="M12 9.5c2.5-1 3-3.5 2-5.5-1.5 1.5-2 3-2 5.5z" />
+      <path d="M9 11c-2-.5-3.5-2-3.5-4 .5 1.5 1.5 2.5 3.5 4z" />
+      <path d="M15 11c2-.5 3.5-2 3.5-4-.5 1.5-1.5 2.5-3.5 4z" />
+    </>
+  ),
+  // 嫩枝（日记卡片）
+  'sprout-green': (
+    <>
+      <path d="M12 21V10" strokeWidth={2} />
+      <path d="M12 14c-3-2-6-1.5-7 1 2-1 4.5-.5 7 1z" fill="currentColor" opacity="0.12" stroke="none" />
+      <path d="M12 13c-3-2-6-1-7 1.5 2.5-1.5 5-1 7 1z" />
+      <path d="M12 16c2.5-1.5 5-1 6.5 1-2-1.5-4-1-6.5 1z" />
+      <circle cx="12" cy="9" r="1.5" fill="currentColor" opacity="0.25" stroke="none" />
+    </>
+  ),
+  // 小树+眼睛（盲点卡片）
+  'tree-eye': (
+    <>
+      {/* 小树 */}
+      <path d="M12 20v-6" strokeWidth={2} />
+      <path d="M12 14c-2-3-5-3-5-6 0 2.5 2 4 5 4z" fill="currentColor" opacity="0.1" stroke="none" />
+      <path d="M12 13c2-2.5 4-2 4-5 0 2-1.5 3.2-4 3.5z" />
+      <path d="M7 20h10" />
+      {/* 眼睛（叠加） */}
+      <ellipse cx="17" cy="7" rx="4" ry="2.5" />
+      <circle cx="17" cy="7" r="1.2" fill="currentColor" opacity="0.4" stroke="none" />
     </>
   ),
 }

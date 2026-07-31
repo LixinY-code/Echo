@@ -11,7 +11,7 @@
  */
 import { useEffect, useRef, useState, useCallback, type KeyboardEvent } from 'react'
 import type { ChatMessage } from '@/types'
-import { sendChat, getLabVersions, createSession, updateSessionTitle, summarizeSession } from '@/services/api'
+import { sendChat, getLabVersions, updateSessionTitle, summarizeSession } from '@/services/api'
 import { useApp } from '@/context/AppContext'
 import { genId, isLateNight } from '@/utils/time'
 import HandDrawnIcon from '@/components/common/HandDrawnIcon'
@@ -184,27 +184,6 @@ export default function ChatPage() {
     }
   }, [input, sending, sessionId, setSessionId, patchMessage])
 
-  /** 新建聊天 */
-  const handleNewChat = async () => {
-    // 先对旧会话做总结
-    if (messages.length > 1 && !summarized && sessionId && sessionId !== 'temp') {
-      triggerSummary(sessionId)
-    }
-
-    // 创建新会话
-    try {
-      const session = await createSession('新的对话')
-      setActiveChatId(session.id)
-      setSessionId(session.id)
-      setSummarized(false)
-      setMessages(INITIAL_MESSAGES)
-      firstUserMsgRef.current = null
-      setInput('')
-    } catch (e) {
-      console.warn('[chat] 新建会话失败：', e)
-    }
-  }
-
   /** 切换会话 */
   const handleSwitchSession = useCallback(async (id: string | null) => {
     // 对当前会话做总结
@@ -289,7 +268,7 @@ export default function ChatPage() {
 
   return (
     <div className="flex h-[calc(100vh-61px)] bg-cream">
-      {/* ===== 左侧边栏 ===== */}
+      {/* ===== 左侧边栏（20%） ===== */}
       <Sidebar
         activeSessionId={activeChatId}
         onSwitchSession={handleSwitchSession}
@@ -297,37 +276,28 @@ export default function ChatPage() {
         onToggle={toggleSidebar}
       />
 
-      {/* ===== 主聊天区 ===== */}
+      {/* ===== 主聊天区（80%） ===== */}
       <div className="flex flex-1 flex-col overflow-hidden">
-        {/* 顶部工具栏 */}
-        <div className="flex items-center gap-2 border-b border-ink/5 px-4 py-2 sm:px-6">
+        {/* v2.0 顶部标题栏 */}
+        <div className="flex items-center gap-3 border-b border-milkBrown/5 bg-paper/50 px-4 py-2.5 sm:px-6">
           {!sidebarOpen && (
             <button
               onClick={toggleSidebar}
               aria-label="展开对话历史"
               title="对话历史"
-              className="flex h-8 w-8 items-center justify-center rounded-lg text-ink/40 transition-all duration-200 hover:bg-ink/5 hover:text-ink/70"
+              className="interactive-hover flex h-9 w-9 items-center justify-center rounded-xl text-ink/40 hover:bg-apricot/30 hover:text-milkBrown"
             >
-              <HandDrawnIcon name="menu" className="h-4 w-4" />
+              <HandDrawnIcon name="panel-left-close" className="h-5 w-5" />
             </button>
           )}
-          <h1 className="flex-1 text-sm font-medium text-ink/50">
-            Echo
-            {sidebarOpen && (
-              <span className="ml-2 text-[11px] font-normal text-ink/30">
-                深夜陪伴你
-              </span>
+          <div className="flex-1">
+            <h1 className="text-base font-semibold text-milkBrown">
+              Echo 深夜陪伴你
+            </h1>
+            {activeChatId && (
+              <p className="text-[11px] text-hint">正在倾听你的声音</p>
             )}
-          </h1>
-          <button
-            onClick={handleNewChat}
-            aria-label="新建对话"
-            title="新建对话"
-            className="flex items-center gap-1 rounded-lg border border-ink/8 bg-white px-3 py-1.5 text-xs font-medium text-ink/55 shadow-soft transition-all duration-200 hover:border-apricot/30 hover:text-apricot hover:shadow-glow"
-          >
-            <HandDrawnIcon name="plus" className="h-3.5 w-3.5" />
-            新对话
-          </button>
+          </div>
         </div>
 
         {/* 消息流 */}
@@ -347,15 +317,15 @@ export default function ChatPage() {
           </div>
         </div>
 
-        {/* 输入区 */}
-        <div className="border-t border-ink/5 bg-cream-50/80 paper-blur px-4 py-3 sm:px-6">
-          <div className="mx-auto max-w-2xl">
-            {/* Conversation Lab 按钮 */}
+        {/* ===== v2.0 输入区重设计 ===== */}
+        <div className="border-t border-milkBrown/5 bg-paper/80 backdrop-blur-sm px-4 py-4 sm:px-6">
+          <div className="mx-auto max-w-2xl space-y-2.5">
+            {/* Conversation Lab 按钮 — 浅米色小按钮 */}
             {canShowLab && (
-              <div className="mb-2 flex justify-center">
+              <div className="flex justify-center">
                 <button
                   onClick={handleShowLab}
-                  className="inline-flex items-center gap-1.5 rounded-full border border-sage/30 bg-sage-light/40 px-4 py-1.5 text-xs font-semibold text-sage-deep transition-all duration-300 ease-soft hover:scale-[1.03] hover:bg-sage-light"
+                  className="interactive-hover inline-flex items-center gap-1.5 rounded-full bg-apricot/40 px-4 py-1.5 text-xs font-semibold text-milkBrown transition-all duration-300 ease-soft hover:bg-apricot/60"
                 >
                   <HandDrawnIcon name="sparkle" className="h-3.5 w-3.5" />
                   看看 AI 还能怎么回
@@ -363,8 +333,8 @@ export default function ChatPage() {
               </div>
             )}
 
-            {/* 胶囊输入框 */}
-            <div className="flex items-end gap-2 rounded-full border border-ink/10 bg-white px-3 py-2 shadow-soft transition-all duration-300 focus-within:border-amber/50 focus-within:shadow-glow">
+            {/* v2.0 长条大圆角输入框 */}
+            <div className="flex items-end gap-2.5 rounded-[28px] border border-milkBrown/10 bg-white px-4 py-2.5 shadow-soft transition-all duration-300 focus-within:border-amber/50 focus-within:shadow-glow focus-within:shadow-amber/20">
               <textarea
                 ref={textareaRef}
                 value={input}
@@ -372,21 +342,19 @@ export default function ChatPage() {
                 onKeyDown={handleKeyDown}
                 rows={1}
                 placeholder="想说点什么……就敲在这里"
-                className="max-h-32 flex-1 resize-none bg-transparent px-2 py-1.5 text-[15px] text-ink placeholder:text-ink/35 focus:outline-none"
+                className="max-h-32 flex-1 resize-none bg-transparent px-1 py-1.5 text-[15px] text-ink placeholder:text-hint focus:outline-none"
                 disabled={sending}
               />
+              {/* v2.0 圆形浅杏色发送按钮 */}
               <button
                 onClick={handleSend}
                 disabled={!input.trim() || sending}
                 aria-label="发送"
-                className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full bg-apricot text-ink transition-all duration-300 ease-soft hover:scale-105 hover:bg-apricot-light hover:shadow-glow disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:scale-100"
+                className="interactive-hover flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full bg-apricot text-milkBrown shadow-soft transition-all duration-300 ease-soft hover:bg-apricot-light hover:shadow-glow disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:scale-100"
               >
                 <HandDrawnIcon name="paper-plane" className="h-5 w-5" />
               </button>
             </div>
-            <p className="mt-1.5 text-center text-[11px] text-ink/30">
-              Enter 发送 · Shift + Enter 换行
-            </p>
           </div>
         </div>
       </div>
