@@ -120,6 +120,11 @@ module.exports = {
           '0%, 100%': { opacity: '0.6', transform: 'scale(1)' },
           '50%': { opacity: '1', transform: 'scale(1.05)' },
         },
+        // ✨ 新增：底部弹窗滑入
+        slideUp: {
+          '0%': { opacity: '0', transform: 'translateY(40px)' },
+          '100%': { opacity: '1', transform: 'translateY(0)' },
+        },
       },
       animation: {
         'fade-in-up': 'fadeInUp 0.5s cubic-bezier(0.4,0,0.2,1) both',
@@ -132,6 +137,7 @@ module.exports = {
         'pulse-soft': 'pulseSoft 2.5s ease-in-out infinite',
         'fruit-sway': 'fruitSway 3s ease-in-out infinite', // ✨
         'glow-pulse': 'glowPulse 4s ease-in-out infinite', // ✨
+        'slide-up': 'slideUp 0.35s cubic-bezier(0.4,0,0.2,1) both', // ✨ 底部弹窗
       },
       backgroundImage: {
         'paper-lines':
