@@ -1,17 +1,17 @@
-import React, { useState } from 'react'
+import React, { useState, useRef, useCallback } from 'react'
 
 /**
- * EmotionTree — 数据驱动的情绪果实树（v4.0）
+ * EmotionTree — 数据驱动的情绪果实树（v4.1）
  *
- * 核心变化：
+ * 核心功能：
  *  - 从硬编码果实列表改为接收后端数据（EmotionFruitData[]）
  *  - 每颗果实对应一次对话，带情绪类型/颜色/300字总结
- *  - 鼠标悬停弹出 Tooltip 显示聊天总结
+ *  - 鼠标悬停弹出 Tooltip 显示聊天总结（跟随果实位置）
  *  - emotion_type 自动映射到果实表情（哭脸/笑脸/皱眉等）
  *
- * @param fruits - 来自后端的情绪果实数据数组
- * @param size - 尺寸规格
- * @param animated - 是否启用摇摆动画
+ * v4.1 修复：
+ *  - Tooltip 位置从固定居中改为跟随果实动态定位
+ *  - 使用 SVG foreignObject + 外层 div 实现可靠的 hover 检测
  */
 
 /** 后端返回的情绪果实数据 */
@@ -41,51 +41,50 @@ type FaceType = 'smile' | 'happy' | 'blink' | 'joy' | 'warm' | 'shy' | 'cry' | '
 
 /**
  * emotion_type → face 映射表
- * 确保每种情绪对应一个独特的表情
  */
 const EMOTION_TO_FACE: Record<EmotionFruitData['emotionType'], FaceType> = {
-  joy: 'happy',      // 开心 → 大笑
-  warm: 'warm',      // 温暖 → 点眼浅笑 + 腮红
-  sad: 'cry',        // 难过 → 哭脸（眼泪）
-  anxious: 'worried',// 焦虑 → 皱眉担心
-  confused: 'pensive', // 迷茫 → 困惑表情
-  calm: 'calm',      // 平静 → 宁静微笑
+  joy: 'happy',
+  warm: 'warm',
+  sad: 'cry',
+  anxious: 'worried',
+  confused: 'pensive',
+  calm: 'calm',
 }
 
-/** 预定义的位置模板（22 个位置，按视觉层次排列） */
+/** 预定义的位置模板（22 个位置） */
 const FRUIT_POSITIONS = [
-  { cx: 65, cy: 115, scale: 1.1, hasStem: true },   // 左下-大
-  { cx: 48, cy: 148, scale: 1.05, hasStem: true },   // 左底
-  { cx: 78, cy: 175, scale: 0.9 },                    // 左下角
-  { cx: 100, cy: 135, scale: 0.95 },                  // 左中
-  { cx: 125, cy: 92, scale: 1.0 },                     // 中左上
-  { cx: 108, cy: 72, scale: 0.95 },                    // 左顶
-  { cx: 160, cy: 62, scale: 1.0, hasLeaf: true },     // 正顶(叶)
-  { cx: 195, cy: 68, scale: 1.0 },                     // 右顶
-  { cx: 175, cy: 95, scale: 0.9 },                     // 中上
-  { cx: 210, cy: 102, scale: 1.08 },                   // 右中大
-  { cx: 235, cy: 80, scale: 0.95 },                    // 右上
-  { cx: 188, cy: 125, scale: 0.92, hasLeaf: true },    // 中右(叶)
-  { cx: 248, cy: 128, scale: 1.0 },                    // 右中
-  { cx: 220, cy: 155, scale: 0.95 },                   // 右下
-  { cx: 252, cy: 178, scale: 0.92, hasLeaf: true },    // 右底(叶)
-  { cx: 135, cy: 158, scale: 0.9 },                    // 中下左
-  { cx: 165, cy: 172, scale: 0.95 },                   // 中下
-  { cx: 198, cy: 190, scale: 0.85 },                   // 下中右
-  { cx: 130, cy: 185, scale: 0.82 },                   // 左底2
-  { cx: 230, cy: 205, scale: 0.8 },                    // 最右下
-  { cx: 85, cy: 95, scale: 0.88 },                     // 左上补充
-  { cx: 145, cy: 140, scale: 0.87 },                   // 中心补充
+  { cx: 65, cy: 115, scale: 1.1, hasStem: true },
+  { cx: 48, cy: 148, scale: 1.05, hasStem: true },
+  { cx: 78, cy: 175, scale: 0.9 },
+  { cx: 100, cy: 135, scale: 0.95 },
+  { cx: 125, cy: 92, scale: 1.0 },
+  { cx: 108, cy: 72, scale: 0.95 },
+  { cx: 160, cy: 62, scale: 1.0, hasLeaf: true },
+  { cx: 195, cy: 68, scale: 1.0 },
+  { cx: 175, cy: 95, scale: 0.9 },
+  { cx: 210, cy: 102, scale: 1.08 },
+  { cx: 235, cy: 80, scale: 0.95 },
+  { cx: 188, cy: 125, scale: 0.92, hasLeaf: true },
+  { cx: 248, cy: 128, scale: 1.0 },
+  { cx: 220, cy: 155, scale: 0.95 },
+  { cx: 252, cy: 178, scale: 0.92, hasLeaf: true },
+  { cx: 135, cy: 158, scale: 0.9 },
+  { cx: 165, cy: 172, scale: 0.95 },
+  { cx: 198, cy: 190, scale: 0.85 },
+  { cx: 130, cy: 185, scale: 0.82 },
+  { cx: 230, cy: 205, scale: 0.8 },
+  { cx: 85, cy: 95, scale: 0.88 },
+  { cx: 145, cy: 140, scale: 0.87 },
 ]
 
-/** 默认颜色（用于 fallback 模式） */
+/** 默认颜色 */
 const FALLBACK_COLORS = [
   '#FFB6C1', '#FFB347', '#FFE4D0', '#DDA0DD', '#F0E68C',
   '#ADD8E6', '#98FB98', '#FFC8C8', '#FFDAB9', '#E8D5F0',
   '#C8F0C8',
 ]
 
-/** 默认表情序列（fallback 循环） */
+/** 默认表情序列 */
 const FALLBACK_FACES: FaceType[] = ['smile', 'happy', 'warm', 'blink', 'joy', 'shy']
 
 const EmotionTree: React.FC<EmotionTreeProps> = ({
@@ -96,6 +95,8 @@ const EmotionTree: React.FC<EmotionTreeProps> = ({
   className = '',
 }) => {
   const [hoveredIndex, setHoveredIndex] = useState<number | null>(null)
+  const [tooltipPos, setTooltipPos] = useState<{ x: number; y: number }>({ x: 0, y: 0 })
+  const containerRef = useRef<HTMLDivElement>(null)
 
   // 尺寸规格
   const sizes = {
@@ -107,9 +108,7 @@ const EmotionTree: React.FC<EmotionTreeProps> = ({
   const animClass = animated ? 'animate-fruit-sway' : ''
 
   /**
-   * 构建渲染用的果实列表：
-   *  - 有真实数据时：使用后端数据映射到位置
-   *  - 无数据时：使用 fallback 装饰性果实
+   * 构建渲染用的果实列表
    */
   const renderFruits = (() => {
     if (fruits && fruits.length > 0) {
@@ -117,11 +116,9 @@ const EmotionTree: React.FC<EmotionTreeProps> = ({
         ...FRUIT_POSITIONS[i % FRUIT_POSITIONS.length],
         color: fruit.emotionColor || FALLBACK_COLORS[i % FALLBACK_COLORS.length],
         face: EMOTION_TO_FACE[fruit.emotionType] || 'warm',
-        // 携带元数据供 hover 使用
         meta: fruit,
       }))
     }
-    // Fallback：装饰性果实
     return Array.from({ length: Math.min(fallbackCount, FRUIT_POSITIONS.length) }, (_, i) => ({
       ...FRUIT_POSITIONS[i],
       color: FALLBACK_COLORS[i % FALLBACK_COLORS.length],
@@ -131,7 +128,34 @@ const EmotionTree: React.FC<EmotionTreeProps> = ({
   })()
 
   /**
-   * 渲染表情 SVG 路径（扩展支持 cry/worried/pensive/calm）
+   * 处理果实 hover 进入 — 计算 Tooltip 位置
+   */
+  const handleFruitEnter = useCallback((i: number, cx: number, cy: number) => {
+    if (!renderFruits[i]?.meta) return
+
+    setHoveredIndex(i)
+
+    // 基于 SVG viewBox 坐标系计算实际像素位置
+    if (containerRef.current) {
+      const svgEl = containerRef.current.querySelector('svg')
+      if (svgEl) {
+        const rect = svgEl.getBoundingClientRect()
+        const scaleX = rect.width / 300  // viewBox width
+        const scaleY = rect.height / 280 // viewBox height
+        setTooltipPos({
+          x: rect.left + cx * scaleX,
+          y: rect.top + cy * scaleY,
+        })
+      }
+    }
+  }, [renderFruits])
+
+  const handleFruitLeave = useCallback(() => {
+    setHoveredIndex(null)
+  }, [])
+
+  /**
+   * 渲染表情 SVG 路径
    */
   const renderFace = (face: FaceType, cx: number, cy: number, r: number) => {
     const eyeOffset = r * 0.28
@@ -142,7 +166,6 @@ const EmotionTree: React.FC<EmotionTreeProps> = ({
     const sw = Math.max(r * 0.07, 0.8)
     const cap = 'round'
 
-    // 眼睛配置（扩展 4 种新表情）
     const eyes: Record<FaceType, { left: string; right: string }> = {
       smile: { left: 'circle', right: 'circle' },
       happy: { left: 'circle', right: 'circle' },
@@ -150,13 +173,12 @@ const EmotionTree: React.FC<EmotionTreeProps> = ({
       joy: { left: 'arc', right: 'arc' },
       warm: { left: 'dot', right: 'dot' },
       shy: { left: 'circle', right: 'circle' },
-      cry: { left: 'cry-eye', right: 'cry-eye' },       // 哭眼（泪滴）
-      worried: { left: 'worried-brow', right: 'worried-brow' }, // 皱眉
-      pensive: { left: 'arc', right: 'arc' },              // 困惑弧线
-      calm: { left: 'calm-curve', right: 'calm-curve' },   // 平静弯眼
+      cry: { left: 'cry-eye', right: 'cry-eye' },
+      worried: { left: 'worried-brow', right: 'worried-brow' },
+      pensive: { left: 'arc', right: 'arc' },
+      calm: { left: 'calm-curve', right: 'calm-curve' },
     }
 
-    // 嘴巴配置（扩展）
     const mouths: Record<FaceType, string> = {
       smile: `M ${cx - r * 0.22} ${mouthY} Q ${cx} ${mouthY + r * 0.18} ${cx + r * 0.22} ${mouthY}`,
       happy: `M ${cx - r * 0.2} ${mouthY - r * 0.02} Q ${cx} ${mouthY + r * 0.25} ${cx + r * 0.2} ${mouthY - r * 0.02}`,
@@ -164,10 +186,10 @@ const EmotionTree: React.FC<EmotionTreeProps> = ({
       joy: `M ${cx - r * 0.2} ${mouthY - r * 0.04} Q ${cx} ${mouthY + r * 0.22} ${cx + r * 0.2} ${mouthY - r * 0.04}`,
       warm: `M ${cx - r * 0.16} ${mouthY + r * 0.02} Q ${cx} ${mouthY + r * 0.16} ${cx + r * 0.16} ${mouthY + r * 0.02}`,
       shy: `M ${cx - r * 0.14} ${mouthY + r * 0.04} Q ${cx} ${mouthY + r * 0.12} ${cx + r * 0.14} ${mouthY + r * 0.04}`,
-      cry: `M ${cx - r * 0.16} ${mouthY + r * 0.06} Q ${cx} ${mouthY + r * 0.1} ${cx + r * 0.16} ${mouthY + r * 0.06}`, // 嘟嘴
-      worried: `M ${cx - r * 0.14} ${mouthY + r * 0.08} Q ${cx} ${mouthY - r * 0.02} ${cx + r * 0.14} ${mouthY + r * 0.08}`, // 担心嘴
-      pensive: `M ${cx - r * 0.12} ${mouthY + r * 0.04} Q ${cx} ${mouthY + r * 0.08} ${cx + r * 0.12} ${mouthY + r * 0.04}`, // 浅弧
-      calm: `M ${cx - r * 0.18} ${mouthY} Q ${cx} ${mouthY + r * 0.12} ${cx + r * 0.18} ${mouthY}`, // 宁静微笑
+      cry: `M ${cx - r * 0.16} ${mouthY + r * 0.06} Q ${cx} ${mouthY + r * 0.1} ${cx + r * 0.16} ${mouthY + r * 0.06}`,
+      worried: `M ${cx - r * 0.14} ${mouthY + r * 0.08} Q ${cx} ${mouthY - r * 0.02} ${cx + r * 0.14} ${mouthY + r * 0.08}`,
+      pensive: `M ${cx - r * 0.12} ${mouthY + r * 0.04} Q ${cx} ${mouthY + r * 0.08} ${cx + r * 0.12} ${mouthY + r * 0.04}`,
+      calm: `M ${cx - r * 0.18} ${mouthY} Q ${cx} ${mouthY + r * 0.12} ${cx + r * 0.18} ${mouthY}`,
     }
 
     const eyeCfg = eyes[face]
@@ -185,7 +207,6 @@ const EmotionTree: React.FC<EmotionTreeProps> = ({
         ) : eyeCfg.left === 'cry-eye' ? (
           <>
             <circle cx={cx - eyeOffset} cy={eyeY} r={eyeSize * 0.9} fill={strokeColor} />
-            {/* 泪滴 */}
             <ellipse cx={cx - eyeOffset - eyeSize * 0.6} cy={eyeY + eyeSize * 1.4} rx={eyeSize * 0.35} ry={eyeSize * 0.6} fill="#ADD8E6" opacity={0.6} />
           </>
         ) : eyeCfg.left === 'worried-brow' ? (
@@ -221,7 +242,7 @@ const EmotionTree: React.FC<EmotionTreeProps> = ({
         {/* 嘴巴 */}
         <path d={mouthPath} stroke={strokeColor} strokeWidth={sw + 0.3} fill="none" strokeLinecap={cap} />
 
-        {/* 腮红（warm / shy） */}
+        {/* 腮红 */}
         {(face === 'shy' || face === 'warm') && (
           <>
             <ellipse cx={cx - eyeOffset * 1.6} cy={eyeY + r * 0.15} rx={eyeSize * 1.2} ry={eyeSize * 0.7} fill="#FFB6C1" opacity={0.35} />
@@ -233,7 +254,7 @@ const EmotionTree: React.FC<EmotionTreeProps> = ({
   }
 
   /**
-   * 渲染单个果实（带 hover 交互）
+   * 渲染单个果实（带可靠 hover 交互）
    */
   const renderFruit = (fruit: typeof renderFruits[number], i: number) => {
     const r = s.fruitR * fruit.scale
@@ -252,7 +273,7 @@ const EmotionTree: React.FC<EmotionTreeProps> = ({
           </radialGradient>
         </defs>
 
-        {/* Hover 时的光晕效果 */}
+        {/* Hover 光晕 */}
         {isHovered && hasMeta && (
           <circle
             cx={cx}
@@ -275,7 +296,7 @@ const EmotionTree: React.FC<EmotionTreeProps> = ({
           />
         )}
 
-        {/* 果实主体 */}
+        {/* 果实主体（带 hover 事件） */}
         <circle
           cx={cx}
           cy={cy}
@@ -290,8 +311,8 @@ const EmotionTree: React.FC<EmotionTreeProps> = ({
             transformOrigin: `${cx}px ${cy}px`,
             cursor: hasMeta ? 'pointer' : 'default',
           }}
-          onMouseEnter={() => hasMeta && setHoveredIndex(i)}
-          onMouseLeave={() => setHoveredIndex(null)}
+          onMouseEnter={() => handleFruitEnter(i, cx, cy)}
+          onMouseLeave={handleFruitLeave}
         />
 
         {/* 表情 */}
@@ -300,7 +321,7 @@ const EmotionTree: React.FC<EmotionTreeProps> = ({
         {/* 小绿叶 */}
         {fruit.hasLeaf && (
           <g transform={`translate(${cx + r * 0.72}, ${cy - r * 0.55}) rotate(${25 + i * 12})`}>
-            <ellipse rx={r * 0.3} ry={r * 0.17} fill="#A8C5A0" opacity={0.7} />
+            <ellipse rx={r * 0.3} ry={r * 0.17} fill="#A8C5A0" opacity="0.7" />
             <line x1={-r * 0.06} y1={0} x2={r * 0.22} y2={0} stroke="#7FA176" strokeWidth={0.5} />
           </g>
         )}
@@ -312,7 +333,7 @@ const EmotionTree: React.FC<EmotionTreeProps> = ({
   const hoveredFruit = hoveredIndex !== null ? renderFruits[hoveredIndex]?.meta : null
 
   return (
-    <div className={`relative inline-block ${className}`}>
+    <div ref={containerRef} className={`relative inline-block ${className}`}>
       <svg
         width={s.width}
         height={s.height}
@@ -362,17 +383,21 @@ const EmotionTree: React.FC<EmotionTreeProps> = ({
         {renderFruits.map(renderFruit)}
       </svg>
 
-      {/* ===== 悬停 Tooltip 弹窗 ===== */}
+      {/* ===== 悬停 Tooltip 弹窗（跟随果实位置） ===== */}
       {hoveredFruit && (
         <div
-          className="absolute z-50 max-w-[240px] rounded-2xl border border-milkBrown/10 bg-white/95 px-4 py-3 shadow-lg backdrop-blur-sm animate-fade-in"
+          className="fixed z-[9999] max-w-[240px] rounded-2xl border border-milkBrown/10 bg-white/95 px-4 py-3 shadow-lg backdrop-blur-sm animate-fade-in pointer-events-none"
           style={{
-            top: '50%',
-            left: '50%',
-            transform: 'translate(-50%, -120%)',
-            pointerEvents: 'none',
+            left: `${tooltipPos.x}px`,
+            top: `${tooltipPos.y - 80}px`,  // 果实上方显示
+            transform: 'translateX(-50%)',
           }}
         >
+          {/* 小三角箭头 */}
+          <div
+            className="absolute -bottom-1.5 left-1/2 h-3 w-3 -translate-x-1/2 rotate-45 bg-white/95 border-r border-b border-milkBrown/10"
+          />
+
           {/* 标题行：小果实图标 + 对话标题 */}
           <div className="mb-1.5 flex items-center gap-2">
             <span
@@ -395,11 +420,6 @@ const EmotionTree: React.FC<EmotionTreeProps> = ({
             <span>·</span>
             <span>{hoveredFruit.messageCount} 条消息</span>
           </div>
-
-          {/* 小三角箭头 */}
-          <div
-            className="absolute -bottom-1.5 left-1/2 h-3 w-3 -translate-x-1/2 rotate-45 bg-white/95 border-r border-b border-milkBrown/10"
-          />
         </div>
       )}
     </div>

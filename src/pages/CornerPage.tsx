@@ -14,6 +14,7 @@ import { getInsights, getEmotionFruits, completeQuest } from '@/services/api'
 import type { EmotionFruitData } from '@/types'
 import HandDrawnIcon from '@/components/common/HandDrawnIcon'
 import EmotionTree from '@/components/common/EmotionTree'
+import Garden from '@/components/common/Garden'
 
 interface Insights {
   mainTheme: string
@@ -128,20 +129,32 @@ export default function CornerPage() {
         </button>
       </div>
 
-      {/* ===== 主视觉区：数据驱动的情绪果树（成长花）+ 标题 ===== */}
+      {/* ===== 主视觉区：情绪果树 + 生长花（对称排布）+ 标题 ===== */}
       <section className="relative mx-auto max-w-lg px-4 pt-4 pb-6">
         <div className="text-center">
-          {/* 情绪果树（成长花）— 每颗果实 = 一次对话的情绪结晶 */}
-          <EmotionTree
-            fruits={fruits}
-            fallbackCount={fruits.length > 0 ? fruits.length : undefined}
-            size="xl"
-            animated={true}
-            className="mx-auto mb-3 h-[280px] w-auto max-w-full drop-shadow-sm"
-          />
+          {/* 对称布局：生长花（左） + 情绪果树（中/右） */}
+          <div className="flex items-center justify-center gap-3">
+            {/* 左侧：Garden 生长花（根据任务数显示阶段） */}
+            <div className="flex-shrink-0">
+              <Garden
+                questCount={data?.completedQuests ?? 0}
+                size="sm"
+                className="opacity-90 hover:opacity-100 transition-opacity"
+              />
+            </div>
+
+            {/* 右侧：EmotionTree 情绪果树（每颗果实 = 一次对话） */}
+            <EmotionTree
+              fruits={fruits}
+              fallbackCount={fruits.length > 0 ? fruits.length : undefined}
+              size="xl"
+              animated={true}
+              className="h-[260px] w-auto max-w-[280px] drop-shadow-sm"
+            />
+          </div>
 
           {/* 标题组 */}
-          <h1 className="font-serif text-3xl font-bold italic text-milkBrown mb-1.5">
+          <h1 className="mt-2 font-serif text-3xl font-bold italic text-milkBrown mb-1.5">
             我的角落 🏠
           </h1>
           <p className="text-sm text-milkBrown/55 leading-relaxed">
