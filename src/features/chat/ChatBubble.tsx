@@ -1,12 +1,14 @@
 /**
- * ChatBubble — 聊天气泡（Echo v2.0）
+ * ChatBubble — 聊天气泡（Echo v3.0）
  *
- * - 用户气泡：右侧，暖杏色背景（#F5E6D3）
- * - AI 气泡：左侧，白色圆角 + 浅橙头像 + 极淡暖橙边框
+ * - 用户消息：右侧，白色气泡 + 浅杏色小头像（对齐图二）
+ * - AI 消息：左侧，白色圆角 + 暖橙头像 + 极淡暖橙边框
  * - AI 回复下方有"为什么这样回？"链接
  * - loading 时显示打字机三点动画
  * - error 时显示重试按钮
  * - 展开时渲染 MirrorPanel / LabVersions
+ *
+ * v3.0 更新：用户消息增加小圆形头像（对齐图二参考）
  */
 import type { ChatMessage } from '@/types'
 import HandDrawnIcon from '@/components/common/HandDrawnIcon'
@@ -19,7 +21,7 @@ interface Props {
   onRetry?: (id: string) => void
 }
 
-/** 打字机三点（v2.0 使用 amber 色） */
+/** 打字机三点（使用 amber 色） */
 function TypingDots() {
   return (
     <span className="inline-flex items-center gap-1 py-1">
@@ -33,14 +35,22 @@ function TypingDots() {
 export default function ChatBubble({ message, onToggleMirror, onRetry }: Props) {
   const isUser = message.role === 'user'
 
-  /* ===== 用户消息（v2.0：暖杏色气泡） ===== */
+  /* ===== 用户消息（v3.0：右侧 + 小头像 + 白色气泡） ===== */
   if (isUser) {
     return (
       <div className="flex animate-fade-in-up justify-end">
-        <div className="max-w-[78%] rounded-3xl rounded-tr-lg bg-apricot px-4 py-2.5 text-milkBrown shadow-soft">
-          <p className="whitespace-pre-wrap break-words text-[15px] leading-relaxed">
-            {message.text}
-          </p>
+        <div className="flex max-w-[78%] items-end gap-2">
+          {/* v3.0 用户头像（小圆形，浅杏色） */}
+          <div className="mb-1 flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-apricot shadow-soft">
+            <HandDrawnIcon name="compass" className="h-4 w-4 text-milkBrown/60" />
+          </div>
+
+          {/* 白色圆角气泡 */}
+          <div className="rounded-3xl rounded-tr-lg border border-milkBrown/6 bg-white px-4 py-2.5 shadow-soft">
+            <p className="whitespace-pre-wrap break-words text-[15px] leading-relaxed text-milkBrown">
+              {message.text}
+            </p>
+          </div>
         </div>
       </div>
     )
@@ -53,13 +63,13 @@ export default function ChatBubble({ message, onToggleMirror, onRetry }: Props) 
     <div className="flex animate-fade-in-up justify-start">
       <div className="w-full max-w-[85%]">
         <div className="flex items-start gap-2.5">
-          {/* v2.0 圆形浅橙头像 */}
+          {/* 圆形暖橙头像 */}
           <div className="mt-1 flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full bg-amber/60 shadow-soft">
             <HandDrawnIcon name="lamp" className="h-5 w-5 text-white" />
           </div>
 
           <div className="min-w-0 flex-1">
-            {/* v2.0 白色圆角气泡 + 极淡暖橙边框 */}
+            {/* 白色圆角气泡 + 极淡暖橙边框 */}
             <div className="inline-block max-w-full rounded-3xl rounded-tl-lg border border-amber/15 bg-white px-4 py-2.5 shadow-soft">
               {hasError ? (
                 <div className="flex items-center gap-2 text-milkBrown/60">
@@ -85,7 +95,7 @@ export default function ChatBubble({ message, onToggleMirror, onRetry }: Props) 
               )}
             </div>
 
-            {/* 为什么这样回？（v2.0 使用 milkBrown 色） */}
+            {/* 为什么这样回？ */}
             {!hasError && message.mirror && (
               <div className="mt-1.5 pl-1">
                 <button
