@@ -1,5 +1,5 @@
 /**
- * Sidebar — 聊天记录侧边栏（Echo v2.0 DeepSeek 风格）
+ * Sidebar — 聊天记录侧边栏（Echo v4.0 情绪果实版）
  *
  * 功能：
  *  - 展示历史聊天会话列表（倒序，最近在前）
@@ -7,12 +7,11 @@
  *  - 侧边栏展开/收起切换
  *  - 点击切换会话
  *  - 删除会话
- *  - 显示总结预览
+ *  - 显示总结预览 + 情绪果实小图标
  *
- * v2.0 视觉更新：
- *  - 浅杏色背景 + 白色选中态卡片
- *  - 时间文字使用 hint 色
- *  - 底部 Echo 小 Logo
+ * v4.0 更新：
+ *  - 每个会话卡片旁显示小圆点颜色（对应情绪果实颜色）
+ *  - 支持扩展 emotionType 字段
  */
 import { useEffect, useState, useCallback } from 'react'
 import type { ChatSession } from '@/types'
@@ -197,15 +196,25 @@ export default function Sidebar({
                       : 'hover:bg-apricot/25' // 浅杏色 hover
                   }`}
                 >
-                  {/* 标题行 */}
+                  {/* 标题行（v4.0：+ 情绪果实小圆点） */}
                   <div className="flex items-start justify-between gap-2">
-                    <span
-                      className={`line-clamp-1 flex-1 text-[13px] font-medium leading-tight ${
-                        isActive ? 'text-milkBrown' : 'text-milkBrown/70'
-                      }`}
-                    >
-                      {s.title || '新的对话'}
-                    </span>
+                    <div className="flex items-center gap-2 min-w-0 flex-1">
+                      {/* v4.0：情绪果实颜色指示器 */}
+                      {(s as any).emotionColor && (
+                        <span
+                          className="mt-0.5 h-2.5 w-2.5 flex-shrink-0 rounded-full"
+                          style={{ backgroundColor: (s as any).emotionColor }}
+                          title={(s as any).emotionType || '已分析'}
+                        />
+                      )}
+                      <span
+                        className={`line-clamp-1 text-[13px] font-medium leading-tight ${
+                          isActive ? 'text-milkBrown' : 'text-milkBrown/70'
+                        }`}
+                      >
+                        {s.title || '新的对话'}
+                      </span>
+                    </div>
                     {/* 删除按钮（hover 显示） */}
                     <button
                       onClick={(e) => handleDelete(e, s.id)}

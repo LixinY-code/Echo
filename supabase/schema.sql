@@ -87,9 +87,18 @@ create table if not exists sessions (
   message_count int default 0,
   summary text,
   summarized_at timestamptz,
+  -- EmotionTree 果实数据（v4.0 情绪果实功能）
+  emotion_type text,              -- 'joy'|'warm'|'sad'|'anxious'|'confused'|'calm'
+  emotion_color text,             -- 马卡龙色 hex（如 '#FFB6C1'）
+  full_summary text,              -- 300 字详细总结（用于悬停弹窗）
   created_at timestamptz default now(),
   updated_at timestamptz default now()
 );
 
 create index if not exists idx_sessions_user_updated on sessions(user_id, updated_at desc);
 create index if not exists idx_messages_session on messages(session_id);
+
+-- 若 sessions 表已存在（旧版无 emotion 字段），补字段：
+alter table sessions add column if not exists emotion_type text;
+alter table sessions add column if not exists emotion_color text;
+alter table sessions add column if not exists full_summary text;

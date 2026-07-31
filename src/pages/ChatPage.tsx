@@ -11,7 +11,7 @@
  */
 import { useEffect, useRef, useState, useCallback, type KeyboardEvent } from 'react'
 import type { ChatMessage } from '@/types'
-import { sendChat, getLabVersions, updateSessionTitle, summarizeSession } from '@/services/api'
+import { sendChat, getLabVersions, updateSessionTitle, analyzeSessionEmotion } from '@/services/api'
 import { useApp } from '@/context/AppContext'
 import { genId, isLateNight } from '@/utils/time'
 import HandDrawnIcon from '@/components/common/HandDrawnIcon'
@@ -117,13 +117,14 @@ export default function ChatPage() {
     return () => timers.forEach((t) => clearTimeout(t))
   }, [])
 
-  /** 触发 AI 总结（不阻塞 UI） */
+  /** 触发情绪分析（不阻塞 UI）—— 替代原来的简单总结 */
   const triggerSummary = useCallback(async (sid: string | null) => {
     if (!sid || sid === 'temp') return
     try {
-      await summarizeSession(sid)
+      // v4.0：使用情绪分析 API（同时生成总结 + 情绪果实数据）
+      await analyzeSessionEmotion(sid)
     } catch (e) {
-      console.warn('[chat] 总结失败（非阻塞）：', e)
+      console.warn('[chat] 情绪分析失败（非阻塞）：', e)
     }
   }, [])
 

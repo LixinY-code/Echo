@@ -4,8 +4,10 @@
 // PUT /api/sessions/:id/title —— 更新标题
 // DELETE /api/sessions/:id —— 删除会话
 // POST /api/sessions/:id/summary —— 生成会话总结
-const { ensureUser, createSession, getSessions, getSessionMessages, updateSessionTitle, updateSessionSummary, deleteSession } = require('../lib/store')
-const { generateSummary } = require('../lib/deepseek')
+// POST /api/sessions/:id/emotion —— 情绪分析（EmotionTree 果实）
+// GET /api/emotion-fruits —— 获取用户所有情绪果实
+const { ensureUser, createSession, getSessions, getSessionMessages, updateSessionTitle, updateSessionSummary, updateSessionEmotion, getEmotionFruits, deleteSession } = require('../lib/store')
+const { generateSummary, generateEmotionAnalysis } = require('../lib/deepseek')
 
 /**
  * 解析请求体（兼容 Verver Serverless Functions）
@@ -45,6 +47,13 @@ module.exports = async (req, res) => {
     const { method } = req
     const url = new URL(req.url || '', `http://${req.headers.host}`)
     const pathname = url.pathname.replace(/^\/api\/sessions\/?/, '')
+
+    // ====== 特殊路由：/api/emotion-fruits （不在 /api/sessions 前缀下） ======
+    if (req.url?.includes('/api/emotion-fruits') && method === 'GET') {
+      const uid = await ensureUser(userId).catch(() => userId)
+      const fruits = await getEmotionFruits(uid)
+      return res.json({ fruits })
+    }
 
     // POST /api/sessions → 新建
     if (method === 'POST' && (pathname === '' || pathname === '/')) {
@@ -137,6 +146,50 @@ module.exports = async (req, res) => {
         return res.json({
           summary: '总结生成失败，请稍后重试。',
           summarized: false,
+          error: e?.message || String(e),
+        })
+      }
+    }
+
+    // POST /api/sessions/:id/emotion → 情绪分析（EmotionTree 果实）
+    if (method === 'POST' && rest === '/emotion') {
+      const uid = await ensureUser(userId).catch(() => userId)
+
+      if (!process.env.DEEPSEEK_API_KEY) {
+        return res.status(500).json({
+          error: '服务配置错误：DeepSeek API Key 未设置',
+          emotionType: null,
+          analyzed: false,
+        })
+      }
+
+      const messages = await getSessionMessages(uid, sessionId)
+      if (!messages || messages.length < 2) {
+        return res.json({
+          emotionType: 'warm',
+          emotionColor: '#FFE4D0',
+          summary300: '对话太短，还没结出果实呢。',
+          analyzed: false,
+        })
+      }
+
+      const chatText = messages
+        .filter((m) => m.text)
+        .map((m) => `${m.role === 'user' ? '用户' : 'Echo'}：${m.text}`)
+        .join('\n')
+
+      try {
+        const emotionData = await generateEmotionAnalysis(chatText)
+        // 存入 sessions 表
+        await updateSessionEmotion(sessionId, emotionData)
+        return res.json({ ...emotionData, analyzed: true })
+      } catch (e) {
+        console.error('[sessions/emotion] 情绪分析失败：', e)
+        return res.json({
+          emotionType: 'warm',
+          emotionColor: '#FFE4D0',
+          summary300: '情绪分析失败，但这颗果实依然温暖。',
+          analyzed: false,
           error: e?.message || String(e),
         })
       }

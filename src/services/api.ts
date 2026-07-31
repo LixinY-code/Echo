@@ -20,6 +20,9 @@ import type {
   SessionsResponse,
   SessionMessagesResponse,
   SessionSummaryResponse,
+  EmotionAnalysisResponse,
+  EmotionFruitData,
+  EmotionFruitsResponse,
 } from '@/types'
 import { genId } from '@/utils/time'
 
@@ -460,5 +463,80 @@ export async function summarizeSession(sessionId: string): Promise<string | null
     return res.summary
   } catch {
     return null
+  }
+}
+
+/**
+ * 触发情绪分析（EmotionTree 果实）
+ * 在对话结束/切换会话时调用，返回情绪类型 + 颜色 + 300字总结
+ */
+export async function analyzeSessionEmotion(sessionId: string): Promise<EmotionAnalysisResponse | null> {
+  if (USE_MOCK) {
+    await delay(800)
+    // Mock：随机返回一种情绪
+    const emotions: EmotionAnalysisResponse['emotionType'][] = ['joy', 'warm', 'sad', 'anxious', 'confused', 'calm']
+    const colors: Record<string, string> = {
+      joy: '#FFB6C1', warm: '#FFE4D0', sad: '#ADD8E6',
+      anxious: '#FFB347', confused: '#E8D5F0', calm: '#98FB98',
+    }
+    const type = emotions[Math.floor(Math.random() * emotions.length)]
+    return {
+      emotionType: type,
+      emotionColor: colors[type],
+      summary300: `这是一次${type === 'joy' ? '愉快' : type === 'warm' ? '温暖' : type === 'sad' ? '有些难过' : type === 'anxious' ? '带着焦虑' : type === 'confused' ? '有些迷茫' : '平静'}的对话。你聊到了一些重要的事情，Echo 一直在这里陪着你。`,
+      analyzed: true,
+    }
+  }
+  try {
+    return await request<EmotionAnalysisResponse>(`/sessions/${sessionId}/emotion`, {
+      method: 'POST',
+    })
+  } catch {
+    return null
+  }
+}
+
+/**
+ * 获取用户所有情绪果实（用于 CornerPage 的 EmotionTree）
+ */
+export async function getEmotionFruits(): Promise<EmotionFruitData[]> {
+  if (USE_MOCK) {
+    await delay(400)
+    // Mock：返回示例果实数据
+    return [
+      {
+        sessionId: 'mock-1',
+        title: '关于论文的焦虑',
+        emotionType: 'anxious',
+        emotionColor: '#FFB347',
+        summary300: '这次你聊了论文进度的压力。感觉 deadline 越来越近，但进展不如预期。你提到导师的期待让你有些喘不过气，也担心自己是不是"不够好"。其实你已经做了很多，只是此刻被焦虑遮住了视线。',
+        messageCount: 8,
+        createdAt: new Date(Date.now() - 3600000).toISOString(),
+      },
+      {
+        sessionId: 'mock-2',
+        title: '深夜的迷茫',
+        emotionType: 'confused',
+        emotionColor: '#E8D5F0',
+        summary300: '今晚你聊了未来的方向。在几个选择之间摇摆不定，不知道该往哪里走。这种不确定感让你有点慌，但也说明你在认真思考自己的人生。不用急着找到答案，慢慢来。',
+        messageCount: 12,
+        createdAt: new Date(Date.now() - 86400000).toISOString(),
+      },
+      {
+        sessionId: 'mock-3',
+        title: '今天的小确幸',
+        emotionType: 'joy',
+        emotionColor: '#FFB6C1',
+        summary300: '今天你分享了一件开心的事！虽然只是一个小小的瞬间，但你笑的时候整个世界都亮了。记住这种感觉，它会在其他日子也照亮你。',
+        messageCount: 5,
+        createdAt: new Date(Date.now() - 172800000).toISOString(),
+      },
+    ]
+  }
+  try {
+    const res = await request<EmotionFruitsResponse>('/emotion-fruits', { method: 'GET' })
+    return res.fruits
+  } catch {
+    return []
   }
 }

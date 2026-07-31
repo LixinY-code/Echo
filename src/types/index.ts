@@ -108,3 +108,28 @@ export interface SessionSummaryResponse {
   summary: string
   summarized: boolean
 }
+
+/** 情绪分析响应（EmotionTree 果实） */
+export interface EmotionAnalysisResponse {
+  emotionType: 'joy' | 'warm' | 'sad' | 'anxious' | 'confused' | 'calm'
+  emotionColor: string
+  summary300: string
+  analyzed: boolean
+}
+
+/** 情绪果实数据（来自 /api/emotion-fruits） */
+export interface EmotionFruitData {
+  sessionId: string
+  title: string
+  emotionType: EmotionAnalysisResponse['emotionType']
+  emotionColor: string
+  summary300: string
+  messageCount: number
+  createdAt: string
+  updatedAt?: string
+}
+
+/** 情绪果实列表响应 */
+export interface EmotionFruitsResponse {
+  fruits: EmotionFruitData[]
+}
