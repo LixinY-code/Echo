@@ -133,3 +133,37 @@ export interface EmotionFruitData {
 export interface EmotionFruitsResponse {
   fruits: EmotionFruitData[]
 }
+
+/* ============================================================
+ * 微光任务（Glimmer Quests）—— 轻量日常彩蛋
+ * ============================================================ */
+
+/** 一个微光任务 */
+export interface GlimmerQuest {
+  id: string
+  questKey: string
+  text: string
+  emoji: string
+  completed: boolean
+}
+
+/** 情绪拼图进度（7 个任务 = 1 块碎片，共 9 块） */
+export interface GlimmerPuzzle {
+  totalCompleted: number
+  pieces: number
+  progressToNext: number
+}
+
+/** 今日微光任务响应 */
+export interface GlimmerTodayResponse {
+  quests: GlimmerQuest[]
+  puzzle: GlimmerPuzzle
+}
+
+/** 完成微光任务响应 */
+export interface GlimmerCompleteResponse {
+  success: boolean
+  puzzle: GlimmerPuzzle
+  /** 本次完成是否恰好解锁一块新碎片 */
+  newPiece: boolean
+}

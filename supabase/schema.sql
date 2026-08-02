@@ -102,3 +102,21 @@ create index if not exists idx_messages_session on messages(session_id);
 alter table sessions add column if not exists emotion_type text;
 alter table sessions add column if not exists emotion_color text;
 alter table sessions add column if not exists full_summary text;
+
+-- 微光任务（Glimmer Quests）：轻量日常彩蛋任务
+-- 每天 1-3 个，date 为上海时区日期；午夜后自然过期（不再返回）
+create table if not exists glimmer_quests (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid references users(id) on delete cascade,
+  quest_key text,                -- 任务池标识（如 'sky-photo'）
+  text text not null,            -- 任务文案快照
+  emoji text,                    -- 小图标
+  date date not null,            -- 所属日期（Asia/Shanghai）
+  completed boolean default false,
+  completed_at timestamptz,
+  created_at timestamptz default now()
+);
+
+create index if not exists idx_glimmer_user_date on glimmer_quests(user_id, date);
+-- 防并发重复生成：同一用户同一天同一任务唯一
+create unique index if not exists idx_glimmer_user_date_key on glimmer_quests(user_id, date, quest_key);

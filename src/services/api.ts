@@ -23,6 +23,10 @@ import type {
   EmotionAnalysisResponse,
   EmotionFruitData,
   EmotionFruitsResponse,
+  GlimmerQuest,
+  GlimmerPuzzle,
+  GlimmerTodayResponse,
+  GlimmerCompleteResponse,
 } from '@/types'
 import { genId } from '@/utils/time'
 
@@ -539,4 +543,119 @@ export async function getEmotionFruits(): Promise<EmotionFruitData[]> {
   } catch {
     return []
   }
+}
+
+/* ============================================================
+ * 微光任务（Glimmer Quests）API
+ * 轻量日常彩蛋：每天 1-3 个，午夜自动更换，无惩罚
+ * ============================================================ */
+
+/** mock 微光任务（localStorage 持久化，按天分桶，午夜自动更换） */
+const GLIMMER_KEY = 'echo_mock_glimmer'
+
+interface MockGlimmerStore {
+  date: string // 上海时区日期 YYYY-MM-DD
+  quests: GlimmerQuest[]
+  totalCompleted: number
+}
+
+function mockShanghaiDate(): string {
+  return new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Shanghai' })
+}
+
+function loadMockGlimmer(): MockGlimmerStore {
+  const today = mockShanghaiDate()
+  try {
+    const raw = localStorage.getItem(GLIMMER_KEY)
+    if (raw) {
+      const store = JSON.parse(raw) as MockGlimmerStore
+      // 同一天 → 直接返回（未做的任务在午夜自动"消失"）
+      if (store.date === today) return store
+      // 跨天 → 保留累计完成数，重新生成今日任务
+      const fresh = seedMockGlimmer(today, store.totalCompleted || 0)
+      return fresh
+    }
+  } catch { /* ignore */ }
+  return seedMockGlimmer(today, 0)
+}
+
+function seedMockGlimmer(date: string, totalCompleted: number): MockGlimmerStore {
+  const pool: Omit<GlimmerQuest, 'id' | 'completed'>[] = [
+    { questKey: 'sky-photo', text: '拍下此刻天空的颜色，存进今天的日记', emoji: '🌤️' },
+    { questKey: 'type-delete', text: '在聊天框打一句真心话，然后一个字一个字删掉', emoji: '🫧' },
+    { questKey: 'old-photo-smell', text: '找一张旧照片，试着回想那天空气的味道', emoji: '🎞️' },
+    { questKey: 'soft-hug', text: '抱一抱你身边最柔软的东西', emoji: '🧸' },
+    { questKey: 'night-sound', text: '闭上眼睛，听 30 秒夜晚的声音', emoji: '🌙' },
+  ]
+  // 每天随机 2 个
+  const picked = pool.sort(() => Math.random() - 0.5).slice(0, 2)
+  const store: MockGlimmerStore = {
+    date,
+    quests: picked.map((q) => ({ ...q, id: genId(), completed: false })),
+    totalCompleted,
+  }
+  try { localStorage.setItem(GLIMMER_KEY, JSON.stringify(store)) } catch { /* ignore */ }
+  return store
+}
+
+function saveMockGlimmer(store: MockGlimmerStore) {
+  try { localStorage.setItem(GLIMMER_KEY, JSON.stringify(store)) } catch { /* ignore */ }
+}
+
+function mockPuzzle(totalCompleted: number): GlimmerPuzzle {
+  return {
+    totalCompleted,
+    pieces: Math.floor(totalCompleted / 7),
+    progressToNext: totalCompleted % 7,
+  }
+}
+
+/** 获取今日微光任务（含拼图进度） */
+export async function getTodayGlimmers(): Promise<GlimmerTodayResponse> {
+  if (USE_MOCK) {
+    await delay(350)
+    const store = loadMockGlimmer()
+    return { quests: store.quests, puzzle: mockPuzzle(store.totalCompleted) }
+  }
+  return request<GlimmerTodayResponse>('/glimmer/today', { method: 'GET' })
+}
+
+/** 完成一个微光任务（后端会自动写一条彩蛋日记） */
+export async function completeGlimmer(id: string): Promise<GlimmerCompleteResponse> {
+  if (USE_MOCK) {
+    await delay(300)
+    const store = loadMockGlimmer()
+    const quest = store.quests.find((q) => q.id === id)
+    if (quest && !quest.completed) {
+      quest.completed = true
+      store.totalCompleted += 1
+      // mock 也写一条彩蛋日记
+      const journals = loadMockJournals()
+      journals.push({
+        id: genId(),
+        date: new Date().toISOString(),
+        emotion: '希望',
+        preview: `✨ 微光彩蛋：「${quest.text.slice(0, 30)}」`,
+        content: `✨ 微光彩蛋\n\n今天完成了一个小实验：「${quest.text}」\n\n（这条记录来自微光任务，只有你和夜晚知道。）`,
+      })
+      saveMockJournals(journals)
+      saveMockGlimmer(store)
+    }
+    const puzzle = mockPuzzle(store.totalCompleted)
+    return { success: true, puzzle, newPiece: puzzle.progressToNext === 0 }
+  }
+  return request<GlimmerCompleteResponse>('/glimmer/complete', {
+    method: 'POST',
+    body: JSON.stringify({ id }),
+  })
+}
+
+/** 获取情绪拼图进度 */
+export async function getGlimmerPuzzle(): Promise<GlimmerPuzzle> {
+  if (USE_MOCK) {
+    await delay(250)
+    const store = loadMockGlimmer()
+    return mockPuzzle(store.totalCompleted)
+  }
+  return request<GlimmerPuzzle>('/glimmer/puzzle', { method: 'GET' })
 }

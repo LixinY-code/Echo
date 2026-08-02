@@ -125,6 +125,20 @@ module.exports = {
           '0%': { opacity: '0', transform: 'translateY(40px)' },
           '100%': { opacity: '1', transform: 'translateY(0)' },
         },
+        // ✨ 新增：蒲公英种子飞散（方向由 CSS 变量 --dx/--dy/--dr 控制）
+        seedFly: {
+          '0%': { opacity: '1', transform: 'translate(0, 0) rotate(0deg) scale(1)' },
+          '60%': { opacity: '0.9' },
+          '100%': {
+            opacity: '0',
+            transform: 'translate(var(--dx), var(--dy)) rotate(var(--dr)) scale(0.6)',
+          },
+        },
+        // ✨ 新增：小纸条轻微摇摆（微光任务纸条）
+        noteSway: {
+          '0%, 100%': { transform: 'rotate(1.2deg)' },
+          '50%': { transform: 'rotate(-1.2deg)' },
+        },
       },
       animation: {
         'fade-in-up': 'fadeInUp 0.5s cubic-bezier(0.4,0,0.2,1) both',
@@ -138,6 +152,8 @@ module.exports = {
         'fruit-sway': 'fruitSway 3s ease-in-out infinite', // ✨
         'glow-pulse': 'glowPulse 4s ease-in-out infinite', // ✨
         'slide-up': 'slideUp 0.35s cubic-bezier(0.4,0,0.2,1) both', // ✨ 底部弹窗
+        'seed-fly': 'seedFly 1.15s cubic-bezier(0.25,0.6,0.35,1) forwards', // ✨ 蒲公英种子
+        'note-sway': 'noteSway 5s ease-in-out infinite', // ✨ 纸条摇摆
       },
       backgroundImage: {
         'paper-lines':

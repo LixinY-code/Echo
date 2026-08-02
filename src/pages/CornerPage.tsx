@@ -8,7 +8,8 @@
  *  - 移除情绪果树，生长花作为唯一主视觉居中展示
  */
 import { useEffect, useState, useCallback } from 'react'
-import { getInsights, completeQuest } from '@/services/api'
+import { getInsights, completeQuest, getGlimmerPuzzle } from '@/services/api'
+import type { GlimmerPuzzle } from '@/types'
 import HandDrawnIcon from '@/components/common/HandDrawnIcon'
 import Garden from '@/components/common/Garden'
 
@@ -26,6 +27,8 @@ export default function CornerPage() {
   const [data, setData] = useState<Insights | null>(null)
   const [loading, setLoading] = useState(true)
   const [refreshing, setRefreshing] = useState(false)
+  // 情绪拼图进度（微光任务：7 个 = 1 块碎片）
+  const [puzzle, setPuzzle] = useState<GlimmerPuzzle | null>(null)
 
   // 「今天做成了一件小事」弹窗状态
   const [showQuestModal, setShowQuestModal] = useState(false)
@@ -33,14 +36,21 @@ export default function CornerPage() {
   const [questSaving, setQuestSaving] = useState(false)
   const [questSuccess, setQuestSuccess] = useState(false)
 
-  /** 加载洞察数据 */
+  /** 加载洞察数据 + 拼图进度 */
   const loadData = useCallback(async () => {
     try {
-      const insightsResult = await getInsights().catch((e) => {
-        console.warn('[corner] 加载洞察失败：', e)
-        return null
-      })
+      const [insightsResult, puzzleResult] = await Promise.all([
+        getInsights().catch((e) => {
+          console.warn('[corner] 加载洞察失败：', e)
+          return null
+        }),
+        getGlimmerPuzzle().catch((e) => {
+          console.warn('[corner] 加载拼图失败：', e)
+          return null
+        }),
+      ])
       if (insightsResult) setData(insightsResult)
+      if (puzzleResult) setPuzzle(puzzleResult)
     } finally {
       setLoading(false)
       setRefreshing(false)
@@ -194,6 +204,53 @@ export default function CornerPage() {
           </div>
         </div>
       </section>
+
+      {/* ===== 情绪拼图（微光任务：7 个 = 1 块碎片，共 9 块） ===== */}
+      {puzzle && (
+        <section className="mx-auto max-w-lg px-4 pb-7">
+          <div className="overflow-hidden rounded-2xl border border-milkBrown/6 bg-white p-5 shadow-soft">
+            <div className="mb-3 flex items-baseline justify-between">
+              <h3 className="text-sm font-semibold text-milkBrown">情绪拼图 🧩</h3>
+              <p className="text-[11px] text-hint">
+                {puzzle.totalCompleted > 0
+                  ? `已收集 ${puzzle.totalCompleted} 个微光`
+                  : '完成微光任务，一块块点亮它'}
+              </p>
+            </div>
+
+            {/* 3×3 拼图格 */}
+            <div className="mx-auto grid max-w-[220px] grid-cols-3 gap-1.5">
+              {Array.from({ length: 9 }, (_, i) => {
+                const unlocked = i < puzzle.pieces
+                const colors = ['#FFB6C1', '#FFB347', '#F0E68C', '#98FB98', '#ADD8E6', '#DDA0DD', '#FFC8C8', '#FFDAB9', '#C8F0C8']
+                return (
+                  <div
+                    key={i}
+                    className={`flex aspect-square items-center justify-center rounded-xl text-lg transition-all duration-700 ${
+                      unlocked
+                        ? 'shadow-inner-soft'
+                        : 'border border-dashed border-milkBrown/15 bg-cream/40'
+                    }`}
+                    style={unlocked ? { backgroundColor: colors[i] } : undefined}
+                  >
+                    {unlocked ? (
+                      <span className="text-white/90 drop-shadow-sm">✦</span>
+                    ) : (
+                      <span className="text-milkBrown/15 text-sm">🧩</span>
+                    )}
+                  </div>
+                )
+              })}
+            </div>
+
+            <p className="mt-3 text-center text-[11px] text-hint">
+              {puzzle.progressToNext === 0 && puzzle.totalCompleted > 0
+                ? '刚刚点亮了一块新碎片 ✨'
+                : `再完成 ${7 - puzzle.progressToNext} 个微光任务，解锁下一块`}
+            </p>
+          </div>
+        </section>
+      )}
 
       {/* ===== 操作按钮：记录今天的小事 ===== */}
       <section className="mx-auto max-w-lg px-4 pb-7 text-center">

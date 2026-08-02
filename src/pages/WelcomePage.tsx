@@ -9,6 +9,7 @@ import { Link } from 'react-router-dom'
 import { greetingByTime, timeLabel } from '@/utils/time'
 import HandDrawnIcon from '@/components/common/HandDrawnIcon'
 import EchoLogo from '@/components/common/EchoLogo' // v2.0 新增
+import GlimmerNote from '@/components/common/GlimmerNote' // 微光任务小纸条
 
 export default function WelcomePage() {
   const greeting = greetingByTime()
@@ -105,6 +106,9 @@ export default function WelcomePage() {
           这里没有评判，只有一盏亮着的小灯。
         </p>
       </div>
+
+      {/* ===== 微光任务小纸条（右下角，可展开） ===== */}
+      <GlimmerNote />
     </div>
   )
 }
