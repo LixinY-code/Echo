@@ -4,18 +4,84 @@
  * 四段式结构化分析，无图标，口语化标题：
  * 1. 我从你的话里听到的（情绪标签）
  * 2. 我是怎么回你的（回应策略）
- * 3. 我可能没看到的地方（盲点段落）
+ * 3. 我可能没看到的地方（盲点列表 + 「种下这个盲点」）
  * 4. 我得老实说（限制声明，斜体）
  *
- * 如果有 profileContext，在顶部显示 Echo 的记忆引用。
+ * 盲点花园联动：
+ *  - 每条盲点旁有「种下」按钮 → 存入 /corner/blindspot-garden
+ *  - 面板展开 = "再次查看"：对已种下的盲点静默触发成长（每天一次）
+ *  - 若本次查看让它成熟，显示一句轻柔的彩蛋提示
  */
+import { useEffect, useRef, useState } from 'react'
+import { Link } from 'react-router-dom'
 import type { MirrorData } from '@/types'
+import { plantBlindspot, getBlindspotGarden, growBlindspot } from '@/services/api'
 
 interface Props {
   data: MirrorData
+  /** 来源会话 id（种下时记录，用于成熟提示语） */
+  sessionId?: string
 }
 
-export default function MirrorPanel({ data }: Props) {
+export default function MirrorPanel({ data, sessionId }: Props) {
+  /** 已种下的盲点文本集合 */
+  const [planted, setPlanted] = useState<Set<string>>(new Set())
+  /** 正在种下的盲点文本 */
+  const [plantingText, setPlantingText] = useState<string | null>(null)
+  /** 刚种下的反馈（"已种下 🌱"） */
+  const [justPlanted, setJustPlanted] = useState<string | null>(null)
+  /** 查看触发成熟的彩蛋提示 */
+  const [matureHint, setMatureHint] = useState<string | null>(null)
+  /** 防止重复触发 view 成长 */
+  const viewFiredRef = useRef(false)
+
+  // 面板展开 = 再次查看：加载已种下列表，并对已种盲点静默触发成长
+  useEffect(() => {
+    if (viewFiredRef.current) return
+    viewFiredRef.current = true
+    let cancelled = false
+
+    getBlindspotGarden()
+      .then(async (seeds) => {
+        if (cancelled) return
+        const plantedSet = new Set(seeds.map((s) => s.blindspotText))
+        setPlanted(plantedSet)
+
+        // 对本面板中已种下的盲点，触发"再次查看"成长
+        for (const text of data.blindspots) {
+          if (plantedSet.has(text)) {
+            const newlyMatured = await growBlindspot('view', { text })
+            if (!cancelled && newlyMatured.length > 0) {
+              setMatureHint(newlyMatured[0].plantName || null)
+              setTimeout(() => setMatureHint(null), 4000)
+            }
+          }
+        }
+      })
+      .catch(() => { /* 彩蛋功能，失败静默 */ })
+
+    return () => {
+      cancelled = true
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
+  /** 种下这个盲点 */
+  const handlePlant = async (text: string) => {
+    if (plantingText) return
+    setPlantingText(text)
+    try {
+      const res = await plantBlindspot(text, sessionId)
+      setPlanted((prev) => new Set(prev).add(text))
+      if (!res.already) {
+        setJustPlanted(text)
+        setTimeout(() => setJustPlanted(null), 2600)
+      }
+    } catch { /* 静默 */ } finally {
+      setPlantingText(null)
+    }
+  }
+
   return (
     <div className="paper-blur mt-2 overflow-hidden rounded-2xl border border-ink/5 shadow-soft">
       <div className="space-y-4 p-5">
@@ -55,14 +121,66 @@ export default function MirrorPanel({ data }: Props) {
           </p>
         </section>
 
-        {/* 3. 我可能没看到的地方 */}
+        {/* 3. 我可能没看到的地方（可种下） */}
         <section className="line-reveal" style={{ animationDelay: (data.profileContext ? 240 : 180) + 'ms' }}>
           <h3 className="mb-2.5 text-sm font-bold text-ink/80">
             我可能没看到的地方
           </h3>
-          <p className="text-[15px] leading-relaxed text-ink/70">
-            {data.blindspots.join('、')}
-          </p>
+          <ul className="space-y-2.5">
+            {data.blindspots.map((text, i) => {
+              const isPlanted = planted.has(text)
+              const isJustPlanted = justPlanted === text
+              return (
+                <li key={i} className="flex items-start gap-2.5">
+                  <p className="flex-1 text-[15px] leading-relaxed text-ink/70">
+                    {text}
+                  </p>
+                  {isPlanted ? (
+                    <span
+                      className={`mt-0.5 flex-shrink-0 rounded-full px-2.5 py-1 text-[11px] transition-all duration-500 ${
+                        isJustPlanted
+                          ? 'bg-sage/25 text-sage-deep animate-fade-in'
+                          : 'bg-sage/10 text-sage-deep/70'
+                      }`}
+                    >
+                      {isJustPlanted ? '已种下 🌱' : '已在花园里'}
+                    </span>
+                  ) : (
+                    <button
+                      onClick={() => handlePlant(text)}
+                      disabled={plantingText !== null}
+                      title="把这个盲点种进花园，用后来的反思养大它"
+                      className="group mt-0.5 flex flex-shrink-0 items-center gap-1 rounded-full border border-sage/30 bg-sage/5 px-2.5 py-1 text-[11px] text-sage-deep transition-all duration-300 hover:border-sage/50 hover:bg-sage/15 hover:shadow-soft disabled:opacity-50"
+                    >
+                      {/* 小种子图标 */}
+                      <svg viewBox="0 0 12 12" className="h-3 w-3 transition-transform duration-300 group-hover:scale-110" aria-hidden="true">
+                        <ellipse cx="6" cy="7.5" rx="3" ry="2.6" fill="currentColor" opacity="0.55" />
+                        <path d="M6 5 Q6.5 2.5 4.5 1.5" fill="none" stroke="currentColor" strokeWidth="1.1" strokeLinecap="round" />
+                      </svg>
+                      {plantingText === text ? '种下中…' : '种下这个盲点'}
+                    </button>
+                  )}
+                </li>
+              )
+            })}
+          </ul>
+
+          {/* 种下后的轻提示 */}
+          {justPlanted && (
+            <p className="mt-2 animate-fade-in text-[11px] text-sage-deep/80">
+              它会在你再次查看、写日记、或试试换框模式时，慢慢发芽。
+              <Link to="/corner/blindspot-garden" className="ml-1 underline decoration-sage/40 underline-offset-2 hover:text-sage-deep">
+                去花园看看 →
+              </Link>
+            </p>
+          )}
+
+          {/* 查看触发成熟的彩蛋 */}
+          {matureHint && (
+            <p className="mt-2 animate-fade-in rounded-xl bg-sage/10 px-3 py-2 text-[11px] leading-relaxed text-sage-deep">
+              🌱 你又一次看见它——花园里的「{matureHint}」悄悄长大了。
+            </p>
+          )}
         </section>
 
         {/* 4. 我得老实说 */}

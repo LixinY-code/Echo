@@ -6,7 +6,7 @@
  */
 import { useEffect, useState, useCallback } from 'react'
 import type { JournalEntry, Emotion } from '@/types'
-import { getJournals, createJournal, deleteJournal } from '@/services/api'
+import { getJournals, createJournal, deleteJournal, growBlindspot } from '@/services/api'
 import { formatDateCN, formatTime } from '@/utils/time'
 import HandDrawnIcon, { type IconName } from '@/components/common/HandDrawnIcon'
 import WarmButton from '@/components/common/WarmButton'
@@ -53,11 +53,14 @@ export default function JournalPage() {
     if (!draft.trim() || saving) return
     setSaving(true)
     try {
-      await createJournal(draft.trim(), emotion)
+      const content = draft.trim()
+      await createJournal(content, emotion)
       setDraft('')
       setEmotion('平静')
       setEditing(false)
       await load()
+      // 盲点花园：日记写到相关内容 → 命中的种子 +1（静默彩蛋）
+      void growBlindspot('journal', { content })
     } finally {
       setSaving(false)
     }

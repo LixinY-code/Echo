@@ -8,6 +8,7 @@
  *  - 移除情绪果树，生长花作为唯一主视觉居中展示
  */
 import { useEffect, useState, useCallback } from 'react'
+import { Link } from 'react-router-dom'
 import { getInsights, completeQuest, getGlimmerPuzzle } from '@/services/api'
 import type { GlimmerPuzzle } from '@/types'
 import HandDrawnIcon from '@/components/common/HandDrawnIcon'
@@ -253,7 +254,7 @@ export default function CornerPage() {
       )}
 
       {/* ===== 操作按钮：记录今天的小事 ===== */}
-      <section className="mx-auto max-w-lg px-4 pb-7 text-center">
+      <section className="mx-auto max-w-lg px-4 pb-5 text-center">
         <button
           onClick={handleOpenQuestModal}
           className="interactive-hover inline-flex items-center gap-2 rounded-full bg-amber px-6 py-3 text-base font-semibold text-white shadow-glow transition-all duration-300 ease-soft hover:bg-amber-light hover:text-milkBrown"
@@ -261,6 +262,24 @@ export default function CornerPage() {
           <HandDrawnIcon name="plus" className="h-5 w-5" />
           今天我做成了一件小事
         </button>
+      </section>
+
+      {/* ===== 盲点花园入口（小拱门链接） ===== */}
+      <section className="mx-auto max-w-lg px-4 pb-8 text-center">
+        <Link
+          to="/corner/blindspot-garden"
+          className="interactive-hover group inline-flex items-center gap-2 rounded-full border border-sage/25 bg-white/70 px-5 py-2.5 text-sm text-sage-deep shadow-soft transition-all duration-300 hover:border-sage/40 hover:bg-sage/10"
+        >
+          {/* 小门拱形图标 */}
+          <svg viewBox="0 0 16 16" className="h-4 w-4 transition-transform duration-300 group-hover:scale-105" aria-hidden="true">
+            <path d="M3 14 L3 7 Q3 2.5 8 2.5 Q13 2.5 13 7 L13 14" fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" />
+            <circle cx="8" cy="9" r="1.6" fill="currentColor" opacity="0.5" />
+          </svg>
+          去盲点花园走走
+        </Link>
+        <p className="mt-2 text-[10.5px] text-hint/60">
+          AI 没看到的那些地方，在那里慢慢长大
+        </p>
       </section>
 
       {/* ===== 底部收尾文案 ===== */}

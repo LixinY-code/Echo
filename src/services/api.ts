@@ -27,6 +27,10 @@ import type {
   GlimmerPuzzle,
   GlimmerTodayResponse,
   GlimmerCompleteResponse,
+  BlindspotSeed,
+  BlindspotPlantResponse,
+  BlindspotGardenResponse,
+  BlindspotGrowResponse,
 } from '@/types'
 import { genId } from '@/utils/time'
 
@@ -658,4 +662,147 @@ export async function getGlimmerPuzzle(): Promise<GlimmerPuzzle> {
     return mockPuzzle(store.totalCompleted)
   }
   return request<GlimmerPuzzle>('/glimmer/puzzle', { method: 'GET' })
+}
+
+/* ============================================================
+ * 盲点花园（Blindspot Garden）API
+ * 把 AI 的"可能盲点"种下，靠反思行为（查看/日记/换框）养大
+ * ============================================================ */
+
+/** mock 盲点花园（localStorage 持久化，规则与后端一致） */
+const BLINDSPOT_KEY = 'echo_mock_blindspots'
+
+/** 与后端 lib/blindspot.js 同步的 mock 工具 */
+const MOCK_THEME_RULES: Array<[RegExp, string]> = [
+  [/支持|朋友|家人|身边|陪伴/, '被忽略的支持'],
+  [/视角|角度|可能|另一种|别的/, '另一种可能'],
+  [/尝试|方法|做过|已经/, '未问出口的路'],
+  [/情绪|事实|感受|当作/, '情绪与事实之间'],
+  [/身体|休息|睡眠|累|疲惫/, '身体的信号'],
+  [/过去|曾经|经验|以前/, '旧经验的声音'],
+  [/他人|别人|对方|处境/, '他人的处境'],
+]
+const MOCK_PLANT_NAMES = ['铃兰', '薄荷', '含羞草', '蒲公英', '雏菊', '满天星', '迷迭香', '薰衣草', '风信子', '酢浆草']
+
+interface MockSeed extends BlindspotSeed {
+  growth: number
+  triggers: Array<{ type: string; date: string }>
+}
+
+function mockExtractTheme(text: string): string {
+  for (const [re, theme] of MOCK_THEME_RULES) {
+    if (re.test(text)) return theme
+  }
+  return '没被看见的一角'
+}
+
+function mockShanghaiToday(): string {
+  return new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Shanghai' })
+}
+
+function loadMockSeeds(): MockSeed[] {
+  try {
+    const raw = localStorage.getItem(BLINDSPOT_KEY)
+    if (raw) return JSON.parse(raw)
+  } catch { /* ignore */ }
+  return []
+}
+
+function saveMockSeeds(list: MockSeed[]) {
+  try { localStorage.setItem(BLINDSPOT_KEY, JSON.stringify(list)) } catch { /* ignore */ }
+}
+
+function stripMockSeed(s: MockSeed): BlindspotSeed {
+  const { growth: _g, triggers: _t, ...seed } = s
+  return seed
+}
+
+/** 种下一个盲点 */
+export async function plantBlindspot(text: string, sessionId?: string): Promise<BlindspotPlantResponse> {
+  if (USE_MOCK) {
+    await delay(300)
+    const list = loadMockSeeds()
+    const existing = list.find((s) => s.blindspotText === text)
+    if (existing) return { seed: stripMockSeed(existing), already: true }
+    const seed: MockSeed = {
+      id: genId(),
+      blindspotText: text,
+      theme: mockExtractTheme(text),
+      stage: 'seed',
+      plantedAt: new Date().toISOString(),
+      growth: 0,
+      triggers: [],
+    }
+    list.push(seed)
+    saveMockSeeds(list)
+    return { seed: stripMockSeed(seed), already: false }
+  }
+  return request<BlindspotPlantResponse>('/blindspot/plant', {
+    method: 'POST',
+    body: JSON.stringify({ text, sessionId }),
+  })
+}
+
+/** 获取盲点花园 */
+export async function getBlindspotGarden(): Promise<BlindspotSeed[]> {
+  if (USE_MOCK) {
+    await delay(300)
+    return loadMockSeeds().map(stripMockSeed)
+  }
+  const res = await request<BlindspotGardenResponse>('/blindspot/garden', { method: 'GET' })
+  return res.seeds
+}
+
+/**
+ * 成长触发（静默调用，失败不打扰用户）
+ * @param type view=再次查看盲点 / journal=日记写到相关内容 / lab=完成换框模式
+ * @returns 新成熟的植物（可用于彩蛋提示），无则空数组
+ */
+export async function growBlindspot(
+  type: 'view' | 'journal' | 'lab',
+  payload?: { text?: string; content?: string },
+): Promise<BlindspotSeed[]> {
+  if (USE_MOCK) {
+    await delay(200)
+    const list = loadMockSeeds()
+    const today = mockShanghaiToday()
+    const newlyMatured: BlindspotSeed[] = []
+    for (const s of list) {
+      if (s.stage === 'mature') continue
+      // 触发范围筛选
+      if (type === 'view' && s.blindspotText !== payload?.text) continue
+      if (type === 'journal') {
+        const content = payload?.content || ''
+        // 与后端同步：2-3 字滑动窗口关键词匹配（保证 "支持" 这类词不被切开）
+        const chars = (s.blindspotText.match(/[\u4e00-\u9fa5]+/g) || []).join('')
+        let hit = false
+        for (let i = 0; i < chars.length - 1 && !hit; i++) {
+          if (content.includes(chars.slice(i, i + 2))) hit = true
+        }
+        if (!hit) continue
+      }
+      // 按日+类型去重
+      if (s.triggers.some((t) => t.type === type && t.date === today)) continue
+      s.growth += 1
+      s.triggers.push({ type, date: today })
+      s.stage = s.growth >= 3 ? 'mature' : s.growth >= 1 ? 'sprout' : 'seed'
+      if (s.stage === 'mature' && !s.plantName) {
+        s.plantName = MOCK_PLANT_NAMES[Math.floor(Math.random() * MOCK_PLANT_NAMES.length)]
+        s.message = `${s.theme}曾经从你的话边悄悄溜过。现在，你愿意再回头看看它吗？`
+        s.maturedAt = new Date().toISOString()
+        newlyMatured.push(stripMockSeed(s))
+      }
+    }
+    saveMockSeeds(list)
+    return newlyMatured
+  }
+  try {
+    const res = await request<BlindspotGrowResponse>('/blindspot/grow', {
+      method: 'POST',
+      body: JSON.stringify({ type, ...payload }),
+    })
+    return res.newlyMatured || []
+  } catch {
+    return [] // 成长触发是彩蛋性质，失败静默
+  }
 }

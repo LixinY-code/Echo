@@ -11,7 +11,7 @@
  */
 import { useEffect, useRef, useState, useCallback, type KeyboardEvent } from 'react'
 import type { ChatMessage } from '@/types'
-import { sendChat, getLabVersions, updateSessionTitle, analyzeSessionEmotion } from '@/services/api'
+import { sendChat, getLabVersions, updateSessionTitle, analyzeSessionEmotion, growBlindspot } from '@/services/api'
 import { useApp } from '@/context/AppContext'
 import { genId, isLateNight } from '@/utils/time'
 import HandDrawnIcon from '@/components/common/HandDrawnIcon'
@@ -249,6 +249,8 @@ export default function ChatPage() {
         labLoading: false,
         labLoaded: true,
       })
+      // 盲点花园：完成换框模式体验 → 所有未成熟种子 +1（静默彩蛋）
+      void growBlindspot('lab')
     } catch {
       patchMessage(lastAi.id, { labLoading: false, labLoaded: true })
     }

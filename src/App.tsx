@@ -11,6 +11,7 @@ import ChatPage from '@/pages/ChatPage'
 import JournalPage from '@/pages/JournalPage'
 import InsightsPage from '@/pages/InsightsPage'
 import CornerPage from '@/pages/CornerPage'
+import BlindspotGardenPage from '@/pages/BlindspotGardenPage'
 import Onboarding, { type OnboardingData } from '@/components/Onboarding'
 import { isOnboarded, saveOnboarding } from '@/services/api'
 
@@ -37,6 +38,7 @@ export default function App() {
         <Route path="/journal" element={<JournalPage />} />
         <Route path="/insights" element={<InsightsPage />} />
         <Route path="/corner" element={<CornerPage />} />
+        <Route path="/corner/blindspot-garden" element={<BlindspotGardenPage />} />
       </Route>
       <Route path="*" element={<WelcomePage />} />
     </Routes>

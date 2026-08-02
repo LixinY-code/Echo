@@ -167,3 +167,44 @@ export interface GlimmerCompleteResponse {
   /** 本次完成是否恰好解锁一块新碎片 */
   newPiece: boolean
 }
+
+/* ============================================================
+ * 盲点花园（Blindspot Garden）—— 把 AI 盲点种成植物
+ * ============================================================ */
+
+/** 种子生长阶段（UI 只呈现状态，不展示任何数字） */
+export type BlindspotStage = 'seed' | 'sprout' | 'mature'
+
+/** 一颗盲点种子 */
+export interface BlindspotSeed {
+  id: string
+  /** 盲点原文（来自 Response Mirror） */
+  blindspotText: string
+  /** 主题（命名前半段，种下时提取） */
+  theme: string
+  /** 植物名（成熟时揭晓） */
+  plantName?: string
+  stage: BlindspotStage
+  /** 成熟后的个性化提示语 */
+  message?: string
+  plantedAt: string
+  maturedAt?: string
+}
+
+/** 种下盲点响应 */
+export interface BlindspotPlantResponse {
+  seed: BlindspotSeed
+  /** 是否之前已经种过 */
+  already: boolean
+}
+
+/** 花园响应 */
+export interface BlindspotGardenResponse {
+  seeds: BlindspotSeed[]
+}
+
+/** 成长触发响应 */
+export interface BlindspotGrowResponse {
+  /** 本次新成熟的植物（用于彩蛋提示） */
+  newlyMatured: BlindspotSeed[]
+}

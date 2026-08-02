@@ -120,3 +120,24 @@ create table if not exists glimmer_quests (
 create index if not exists idx_glimmer_user_date on glimmer_quests(user_id, date);
 -- 防并发重复生成：同一用户同一天同一任务唯一
 create unique index if not exists idx_glimmer_user_date_key on glimmer_quests(user_id, date, quest_key);
+
+-- 盲点花园（Blindspot Garden）：把 AI 的"可能盲点"种下，靠反思行为养大
+create table if not exists blindspot_seeds (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid references users(id) on delete cascade,
+  blindspot_text text not null,      -- 盲点原文（来自 Response Mirror）
+  theme text,                        -- 主题（命名前半段，种下时提取）
+  plant_name text,                   -- 植物名（成熟时随机揭晓）
+  growth int default 0,              -- 成长点数（内部状态，UI 不展示）
+  stage text default 'seed',         -- 'seed' | 'sprout' | 'mature'
+  message text,                      -- 成熟后的个性化提示语
+  triggers jsonb default '[]',       -- [{type:'view'|'journal'|'lab', date:'YYYY-MM-DD'}] 按日去重
+  source_session_id text,            -- 来源会话（种下时记录）
+  source_session_title text,         -- 来源会话标题（提示语引用）
+  planted_at timestamptz default now(),
+  matured_at timestamptz
+);
+
+-- 同一盲点不重复种
+create unique index if not exists idx_blindspot_user_text on blindspot_seeds(user_id, blindspot_text);
+create index if not exists idx_blindspot_user on blindspot_seeds(user_id, planted_at);
