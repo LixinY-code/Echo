@@ -6,17 +6,25 @@
  * - v2.0: 使用 EchoLogo 品牌组件 + 新色彩 token
  */
 import { Link } from 'react-router-dom'
-import { greetingByTime, timeLabel } from '@/utils/time'
+import { timeLabel } from '@/utils/time'
 import HandDrawnIcon from '@/components/common/HandDrawnIcon'
 import EchoLogo from '@/components/common/EchoLogo' // v2.0 新增
 import GlimmerNote from '@/components/common/GlimmerNote' // 微光任务小纸条
+import LanguageSwitcher from '@/components/common/LanguageSwitcher'
+import { useLang } from '@/i18n'
 
 export default function WelcomePage() {
-  const greeting = greetingByTime()
+  const { t } = useLang()
   const label = timeLabel()
+  const greeting = t(`welcome.greeting.${label}`)
 
   return (
     <div className="relative min-h-screen overflow-hidden bg-cream">
+      {/* ===== 右上角：语言切换 ===== */}
+      <div className="absolute right-4 top-4 z-20 animate-fade-in">
+        <LanguageSwitcher />
+      </div>
+
       {/* ===== 背景手绘小书桌场景 ===== */}
       <DeskScene label={label} />
 
@@ -70,9 +78,9 @@ export default function WelcomePage() {
               {greeting}
             </p>
             <p className="mt-4 text-sm leading-relaxed text-hint">
-              深夜里的一盏小台灯。
+              {t('welcome.subtitle1')}
               <br />
-              在这里，AI 会陪你说话，也会让你看见它如何说话。
+              {t('welcome.subtitle2')}
             </p>
           </div>
         </div>
@@ -87,14 +95,14 @@ export default function WelcomePage() {
             className="group interactive-hover inline-flex items-center justify-center gap-2.5 rounded-3xl bg-apricot px-9 py-4 text-lg font-bold text-milkBrown shadow-soft transition-all duration-300 ease-soft hover:shadow-glow"
           >
             <HandDrawnIcon name="paper-plane" className="h-5 w-5 transition-transform group-hover:translate-x-0.5" />
-            开始对话
+            {t('welcome.btn.chat')}
           </Link>
           <Link
             to="/journal"
             className="group interactive-hover inline-flex items-center justify-center gap-2.5 rounded-3xl bg-paper border border-milkBrown/10 px-9 py-4 text-lg font-bold text-milkBrown/70 shadow-soft transition-all duration-300 ease-soft hover:text-milkBrown hover:shadow-soft-md"
           >
             <HandDrawnIcon name="journal" className="h-5 w-5" />
-            写写日记
+            {t('welcome.btn.journal')}
           </Link>
         </div>
 
@@ -103,7 +111,7 @@ export default function WelcomePage() {
           className="mt-14 text-xs text-hint animate-fade-in"
           style={{ animationDelay: '0.7s' }}
         >
-          这里没有评判，只有一盏亮着的小灯。
+          {t('welcome.footer')}
         </p>
       </div>
 

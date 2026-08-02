@@ -9,6 +9,7 @@ import { getInsights } from '@/services/api'
 import HandDrawnIcon, { type IconName } from '@/components/common/HandDrawnIcon'
 import WarmButton from '@/components/common/WarmButton'
 import BackButton from '@/components/common/BackButton'
+import { useLang } from '@/i18n'
 
 interface Row {
   icon: IconName
@@ -18,6 +19,7 @@ interface Row {
 }
 
 export default function InsightsPage() {
+  const { t } = useLang()
   const [data, setData] = useState<Insights | null>(null)
   const [loading, setLoading] = useState(true)
 
@@ -56,16 +58,16 @@ export default function InsightsPage() {
         <div className="flex flex-col items-center rounded-3xl bg-cream-50 px-6 py-16 text-center shadow-soft">
           <EmptyEnvelope />
           <p className="mt-6 font-hand text-2xl text-ink/70">
-            多和 AI 聊聊，
-            <br />
-            一周后会有一封写给你的信。
+            {t('insights.emptyTitle').split('\n').map((line, i) => (
+              <span key={i}>{line}{i === 0 && <br />}</span>
+            ))}
           </p>
           <p className="mt-3 text-sm text-ink/45">
-            这封信会安静地总结你这一周的情绪主题，没有评判。
+            {t('insights.emptyDesc')}
           </p>
           <WarmButton variant="ghost" size="sm" className="mt-6" onClick={load}>
             <HandDrawnIcon name="refresh" className="h-4 w-4" />
-            再看看
+            {t('insights.emptyBtn')}
           </WarmButton>
         </div>
       </div>
@@ -76,20 +78,20 @@ export default function InsightsPage() {
   const rows: Row[] = [
     {
       icon: 'heart',
-      label: '本周主要情绪主题',
+      label: t('insights.rowTheme'),
       value: data.mainTheme,
     },
     {
       icon: 'moon',
-      label: 'AI 使用高峰时段',
+      label: t('insights.rowPeak'),
       value: data.peakHours,
-      hint: '深夜使用更频繁，留意一下自己的作息',
+      hint: t('insights.hintPeak'),
     },
     {
       icon: 'sparkle',
-      label: '依赖迹象提示',
+      label: t('insights.rowDependency'),
       value: data.dependencySign,
-      hint: '这只是观察，不是诊断',
+      hint: t('insights.hintDependency'),
     },
   ]
 
@@ -100,7 +102,7 @@ export default function InsightsPage() {
         {/* 信纸顶部装饰 */}
         <div className="mb-6 flex items-center gap-2 text-amber">
           <HandDrawnIcon name="insight" className="h-6 w-6" />
-          <span className="font-hand text-2xl text-ink/75">写给你的一封信</span>
+          <span className="font-hand text-2xl text-ink/75">{t('insights.title')}</span>
         </div>
 
         {/* 开头 */}
@@ -108,7 +110,7 @@ export default function InsightsPage() {
           className="line-reveal mb-5 font-hand text-xl leading-relaxed text-ink/80"
           style={{ animationDelay: '0ms' }}
         >
-          亲爱的你，
+          {t('insights.dear')}
         </p>
 
         {/* 数据行：逐行淡入 */}
@@ -142,7 +144,7 @@ export default function InsightsPage() {
         >
           <div className="mb-1 flex items-center gap-1.5 text-amber">
             <HandDrawnIcon name="sparkle" className="h-4 w-4" />
-            <span className="text-xs font-bold tracking-wide text-ink/55">一句反思</span>
+            <span className="text-xs font-bold tracking-wide text-ink/55">{t('insights.reflection')}</span>
           </div>
           <p className="font-hand text-lg leading-relaxed text-ink/80">
             {data.reflection}
@@ -154,7 +156,7 @@ export default function InsightsPage() {
           className="line-reveal mt-7 text-right font-hand text-lg text-ink/65"
           style={{ animationDelay: `${120 + (rows.length + 1) * 140}ms` }}
         >
-          —— Echo，在台灯下
+          {t('insights.signature')}
         </p>
       </div>
 
@@ -162,7 +164,7 @@ export default function InsightsPage() {
       <div className="mt-6 flex justify-center">
         <WarmButton variant="ghost" size="sm" onClick={load}>
           <HandDrawnIcon name="refresh" className="h-4 w-4" />
-          重新读一遍
+          {t('insights.reread')}
         </WarmButton>
       </div>
     </div>

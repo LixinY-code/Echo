@@ -5,6 +5,7 @@
  * 移动端：横向滑动卡片；桌面端：并排显示。
  */
 import type { LabVersion } from '@/types'
+import { useLang } from '@/i18n'
 import HandDrawnIcon, { type IconName } from '@/components/common/HandDrawnIcon'
 
 interface Props {
@@ -23,13 +24,14 @@ function tagFor(style: string) {
 }
 
 export default function LabVersions({ versions, loading }: Props) {
+  const { t } = useLang()
   if (loading) {
     return (
       <div className="mt-3 flex items-center gap-2 rounded-2xl bg-cream-200/60 px-4 py-3 text-sm text-ink/55">
         <span className="h-2 w-2 animate-bounce rounded-full bg-sage [animation-delay:-0.2s]" />
         <span className="h-2 w-2 animate-bounce rounded-full bg-sage [animation-delay:-0.1s]" />
         <span className="h-2 w-2 animate-bounce rounded-full bg-sage" />
-        <span className="ml-1">正在准备不同的回应视角…</span>
+        <span className="ml-1">{t('lab.loading')}</span>
       </div>
     )
   }
@@ -40,7 +42,7 @@ export default function LabVersions({ versions, loading }: Props) {
     <div className="mt-3">
       <div className="mb-2 flex items-center gap-1.5 pl-1 text-xs font-semibold text-ink/50">
         <HandDrawnIcon name="sparkle" className="h-3.5 w-3.5" />
-        AI 还能这样回
+        {t('lab.title')}
       </div>
       {/* 移动端横向滑动，桌面端 grid 并排 */}
       <div className="no-scrollbar -mx-1 flex snap-x-mandatory gap-3 overflow-x-auto px-1 pb-1 md:grid md:grid-cols-3 md:overflow-visible">
@@ -57,7 +59,7 @@ export default function LabVersions({ versions, loading }: Props) {
                   className={`inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-bold ${meta.color}`}
                 >
                   <HandDrawnIcon name={meta.icon} className="h-3 w-3" />
-                  {v.style}
+                  {t(`lab.style.${v.style}`)}
                 </span>
                 <span className="text-xs text-ink/45">{v.description}</span>
               </div>

@@ -9,6 +9,7 @@
 import { useState } from 'react'
 import HandDrawnIcon, { type IconName } from '@/components/common/HandDrawnIcon'
 import WarmButton from '@/components/common/WarmButton'
+import { useLang } from '@/i18n'
 
 export interface OnboardingData {
   nickname?: string
@@ -40,20 +41,20 @@ const KEYWORDS: { label: string; icon: IconName }[] = [
 
 const PERSONALITIES: {
   value: 'I' | 'E'
-  title: string
-  desc: string
+  titleKey: string
+  descKey: string
   icon: IconName
 }[] = [
   {
     value: 'I',
-    title: 'I 人 · 内向型',
-    desc: '喜欢安静，能量来自独处和深度思考',
+    titleKey: 'onboarding.pers.I.title',
+    descKey: 'onboarding.pers.I.desc',
     icon: 'moon',
   },
   {
     value: 'E',
-    title: 'E 人 · 外向型',
-    desc: '喜欢交流，能量来自人群和新鲜事',
+    titleKey: 'onboarding.pers.E.title',
+    descKey: 'onboarding.pers.E.desc',
     icon: 'sun',
   },
 ]
@@ -61,18 +62,19 @@ const PERSONALITIES: {
 const STEPS = ['称呼', '性格', '关键词']
 
 export default function Onboarding({ onComplete }: Props) {
+  const { t } = useLang()
   const [step, setStep] = useState(0)
   const [nickname, setNickname] = useState('')
   const [personality, setPersonality] = useState<'I' | 'E' | ''>('')
   const [tags, setTags] = useState<string[]>([])
 
-  const toggleTag = (t: string) => {
+  const toggleTag = (tag: string) => {
     setTags((prev) =>
-      prev.includes(t)
-        ? prev.filter((x) => x !== t)
+      prev.includes(tag)
+        ? prev.filter((x) => x !== tag)
         : prev.length >= 5
           ? prev
-          : [...prev, t],
+          : [...prev, tag],
     )
   }
 
@@ -121,16 +123,16 @@ export default function Onboarding({ onComplete }: Props) {
           {/* ===== 步骤 0：称呼 ===== */}
           {step === 0 && (
             <div>
-              <h2 className="font-hand text-3xl text-ink">想让我怎么称呼你？</h2>
+              <h2 className="font-hand text-3xl text-ink">{t('onboarding.step0.title')}</h2>
               <p className="mt-2 text-sm leading-relaxed text-ink/55">
-                随便一个你喜欢的名字就好，不用真名。当然，不想说也行。
+                {t('onboarding.step0.desc')}
               </p>
               <input
                 value={nickname}
                 onChange={(e) => setNickname(e.target.value)}
                 onKeyDown={(e) => e.key === 'Enter' && next()}
                 autoFocus
-                placeholder="比如：小林"
+                placeholder={t('onboarding.step0.placeholder')}
                 className="mt-5 w-full rounded-2xl border border-ink/10 bg-cream-50 px-4 py-3 text-lg text-ink placeholder:text-ink/30 focus:border-amber/40 focus:outline-none focus:ring-2 focus:ring-amber/20"
               />
             </div>
@@ -139,9 +141,9 @@ export default function Onboarding({ onComplete }: Props) {
           {/* ===== 步骤 1：性格 ===== */}
           {step === 1 && (
             <div>
-              <h2 className="font-hand text-3xl text-ink">你觉得自己更接近哪一种？</h2>
+              <h2 className="font-hand text-3xl text-ink">{t('onboarding.step1.title')}</h2>
               <p className="mt-2 text-sm leading-relaxed text-ink/55">
-                没有标准答案，只是帮我看你怎么陪你比较舒服。
+                {t('onboarding.step1.desc')}
               </p>
               <div className="mt-5 space-y-3">
                 {PERSONALITIES.map((p) => {
@@ -165,8 +167,8 @@ export default function Onboarding({ onComplete }: Props) {
                         <HandDrawnIcon name={p.icon} className="h-6 w-6" />
                       </span>
                       <div className="min-w-0">
-                        <p className="font-bold text-ink">{p.title}</p>
-                        <p className="mt-0.5 text-xs leading-relaxed text-ink/55">{p.desc}</p>
+                        <p className="font-bold text-ink">{t(p.titleKey)}</p>
+                        <p className="mt-0.5 text-xs leading-relaxed text-ink/55">{t(p.descKey)}</p>
                       </div>
                     </button>
                   )
@@ -178,9 +180,9 @@ export default function Onboarding({ onComplete }: Props) {
           {/* ===== 步骤 2：关键词 ===== */}
           {step === 2 && (
             <div>
-              <h2 className="font-hand text-3xl text-ink">挑几个词形容自己吧</h2>
+              <h2 className="font-hand text-3xl text-ink">{t('onboarding.step2.title')}</h2>
               <p className="mt-2 text-sm leading-relaxed text-ink/55">
-                选 0-5 个就好，帮我更懂你。也可以都跳过。
+                {t('onboarding.step2.desc')}
               </p>
               <div className="mt-5 flex flex-wrap gap-2">
                 {KEYWORDS.map((k) => {
@@ -188,7 +190,7 @@ export default function Onboarding({ onComplete }: Props) {
                   const disabled = !active && tags.length >= 5
                   return (
                     <button
-                      key={k.label}
+                      key={t(`onboarding.kw.${k.label}`)}
                       onClick={() => toggleTag(k.label)}
                       disabled={disabled}
                       className={[
@@ -201,13 +203,13 @@ export default function Onboarding({ onComplete }: Props) {
                       ].join(' ')}
                     >
                       <HandDrawnIcon name={k.icon} className="h-3.5 w-3.5" />
-                      {k.label}
+                      {t(`onboarding.kw.${k.label}`)}
                     </button>
                   )
                 })}
               </div>
               {tags.length > 0 && (
-                <p className="mt-4 text-xs text-ink/45">已选 {tags.length} / 5</p>
+                <p className="mt-4 text-xs text-ink/45">{t('onboarding.step2.selected', { n: tags.length })}</p>
               )}
             </div>
           )}
@@ -221,7 +223,7 @@ export default function Onboarding({ onComplete }: Props) {
               onClick={() => finish(true)}
               className="text-sm text-ink/45 transition-colors hover:text-ink/70"
             >
-              全部跳过
+              {t('onboarding.skipAll')}
             </button>
           ) : (
             <button
@@ -229,25 +231,25 @@ export default function Onboarding({ onComplete }: Props) {
               className="inline-flex items-center gap-1 text-sm text-ink/55 transition-colors hover:text-ink"
             >
               <HandDrawnIcon name="arrow-left" className="h-4 w-4" />
-              上一步
+              {t('onboarding.back')}
             </button>
           )}
 
           {/* 右：下一步 / 完成 */}
           {step < 2 ? (
             <WarmButton variant="primary" size="sm" onClick={next}>
-              继续
+              {t('onboarding.next')}
             </WarmButton>
           ) : (
             <WarmButton variant="amber" size="sm" onClick={() => finish(false)}>
               <HandDrawnIcon name="paper-plane" className="h-4 w-4" />
-              {tags.length > 0 || nickname || personality ? '好了，开始吧' : '直接开始'}
+              {tags.length > 0 || nickname || personality ? t('onboarding.start') : t('onboarding.startEmpty')}
             </WarmButton>
           )}
         </div>
 
         <p className="mt-5 text-center text-xs text-ink/30">
-          这些信息只有你能看到，用来让 Echo 更懂你。
+          {t('onboarding.privacy')}
         </p>
       </div>
     </div>

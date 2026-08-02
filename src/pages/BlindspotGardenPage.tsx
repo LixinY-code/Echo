@@ -16,8 +16,10 @@ import { getBlindspotGarden } from '@/services/api'
 import type { BlindspotSeed } from '@/types'
 import HandDrawnIcon from '@/components/common/HandDrawnIcon'
 import BlindspotPlant from '@/components/common/BlindspotPlant'
+import { useLang } from '@/i18n'
 
 export default function BlindspotGardenPage() {
+  const { t } = useLang()
   const [seeds, setSeeds] = useState<BlindspotSeed[]>([])
   const [loading, setLoading] = useState(true)
   /** 当前展开提示语的植物 id */
@@ -46,7 +48,7 @@ export default function BlindspotGardenPage() {
       <div className="mx-auto flex max-w-lg items-center justify-between px-4 pt-4">
         <button
           onClick={() => window.history.back()}
-          aria-label="返回"
+          aria-label={t('corner.back')}
           className="interactive-hover flex h-10 w-10 items-center justify-center rounded-full bg-white shadow-soft text-milkBrown transition-all duration-300"
         >
           <HandDrawnIcon name="arrow-left" className="h-5 w-5" />
@@ -56,26 +58,26 @@ export default function BlindspotGardenPage() {
           className="interactive-hover flex h-10 items-center gap-1.5 rounded-full bg-white px-4 shadow-soft text-xs text-milkBrown/70 transition-all duration-300 hover:text-milkBrown"
         >
           <HandDrawnIcon name="sprout-green" className="h-4 w-4" />
-          我的角落
+          {t('garden.cornerLink')}
         </Link>
       </div>
 
       {/* ===== 标题 ===== */}
       <header className="mx-auto max-w-lg px-4 pt-5 pb-6 text-center">
         <h1 className="font-serif text-3xl font-bold italic text-milkBrown mb-2">
-          盲点花园 🌱
+          {t('garden.title')}
         </h1>
         <p className="mx-auto max-w-xs text-[13px] leading-relaxed text-milkBrown/55">
-          AI 坦白说「我可能没看到」的那些地方，
+          {t('garden.subtitle1')}
           <br />
-          你用后来的每一次回想，把它们养大。
+          {t('garden.subtitle2')}
         </p>
       </header>
 
       {/* ===== 花园本体 ===== */}
       <main className="mx-auto max-w-lg px-4 pb-16">
         {loading ? (
-          <div className="py-16 text-center text-hint text-sm">花园里起雾了，稍等…</div>
+          <div className="py-16 text-center text-hint text-sm">{t('garden.loading')}</div>
         ) : seeds.length === 0 ? (
           /* ---- 空花园 ---- */
           <div className="mx-auto max-w-sm rounded-3xl border border-dashed border-milkBrown/15 bg-white/60 px-6 py-12 text-center">
@@ -83,12 +85,12 @@ export default function BlindspotGardenPage() {
               <BlindspotPlant stage="seed" className="h-full w-full" />
             </div>
             <p className="text-sm leading-relaxed text-milkBrown/70">
-              这里还空着。
+              {t('garden.emptyTitle')}
             </p>
             <p className="mt-2 text-xs leading-relaxed text-hint">
-              下次聊天时，点开「AI 为什么这样回」，
+              {t('garden.emptyDesc1')}
               <br />
-              在「我可能没看到的地方」把一句话种下来。
+              {t('garden.emptyDesc2')}
             </p>
           </div>
         ) : (
@@ -113,7 +115,7 @@ export default function BlindspotGardenPage() {
                         </p>
                         {/* 原始盲点（极轻展示，不强调） */}
                         <p className="mt-1.5 text-[10px] leading-relaxed text-hint/70 line-clamp-2">
-                          种自：{seed.blindspotText}
+                          {t('garden.fromPrefix')}{seed.blindspotText}
                         </p>
                       </div>
                     )}
@@ -146,7 +148,7 @@ export default function BlindspotGardenPage() {
                       </p>
                     ) : (
                       <p className="mt-1.5 text-center text-[10px] text-hint/60">
-                        {seed.stage === 'sprout' ? '悄悄发芽了' : '一颗种子'}
+                        {seed.stage === 'sprout' ? t('garden.sprout') : t('garden.seed')}
                       </p>
                     )}
                   </div>
@@ -157,8 +159,8 @@ export default function BlindspotGardenPage() {
             {/* ---- 底部文案（无数字反馈） ---- */}
             <p className="mt-6 text-center text-xs leading-relaxed text-hint/75">
               {hasMature
-                ? '每一株有名字的植物，都是你跳出单一叙事的一次。'
-                : '再次查看它、在日记里提起它、或试试换框模式——它都会悄悄长大。'}
+                ? t('garden.footerMature')
+                : t('garden.footerGrowing')}
             </p>
           </>
         )}

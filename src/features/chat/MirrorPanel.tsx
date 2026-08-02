@@ -2,10 +2,10 @@
  * MirrorPanel — Response Mirror 透明化面板
  * "AI 为什么这样说" 展示 AI 的推理过程。
  * 四段式结构化分析，无图标，口语化标题：
- * 1. 我从你的话里听到的（情绪标签）
- * 2. 我是怎么回你的（回应策略）
- * 3. 我可能没看到的地方（盲点列表 + 「种下这个盲点」）
- * 4. 我得老实说（限制声明，斜体）
+ * 1. {t('mirror.signals')}（情绪标签）
+ * 2. {t('mirror.strategy')}（回应策略）
+ * 3. {t('mirror.blindspots')}（盲点列表 + 「种下这个盲点」）
+ * 4. {t('mirror.limitation')}（限制声明，斜体）
  *
  * 盲点花园联动：
  *  - 每条盲点旁有「种下」按钮 → 存入 /corner/blindspot-garden
@@ -16,6 +16,7 @@ import { useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import type { MirrorData } from '@/types'
 import { plantBlindspot, getBlindspotGarden, growBlindspot } from '@/services/api'
+import { useLang } from '@/i18n'
 
 interface Props {
   data: MirrorData
@@ -24,6 +25,7 @@ interface Props {
 }
 
 export default function MirrorPanel({ data, sessionId }: Props) {
+  const { t } = useLang()
   /** 已种下的盲点文本集合 */
   const [planted, setPlanted] = useState<Set<string>>(new Set())
   /** 正在种下的盲点文本 */
@@ -52,7 +54,7 @@ export default function MirrorPanel({ data, sessionId }: Props) {
           if (plantedSet.has(text)) {
             const newlyMatured = await growBlindspot('view', { text })
             if (!cancelled && newlyMatured.length > 0) {
-              setMatureHint(newlyMatured[0].plantName || null)
+              setMatureHint(t('mirror.maturedHint', { name: newlyMatured[0].plantName || '' }))
               setTimeout(() => setMatureHint(null), 4000)
             }
           }
@@ -94,10 +96,10 @@ export default function MirrorPanel({ data, sessionId }: Props) {
           </div>
         )}
 
-        {/* 1. 我从你的话里听到的 */}
+        {/* 1. {t('mirror.signals')} */}
         <section className="line-reveal" style={{ animationDelay: data.profileContext ? '60ms' : '0ms' }}>
           <h3 className="mb-2.5 text-sm font-bold text-ink/80">
-            我从你的话里听到的
+            {t('mirror.signals')}
           </h3>
           <div className="flex flex-wrap gap-2">
             {data.signals.map((s, i) => (
@@ -111,20 +113,20 @@ export default function MirrorPanel({ data, sessionId }: Props) {
           </div>
         </section>
 
-        {/* 2. 我是怎么回你的 */}
+        {/* 2. {t('mirror.strategy')} */}
         <section className="line-reveal" style={{ animationDelay: (data.profileContext ? 150 : 90) + 'ms' }}>
           <h3 className="mb-2.5 text-sm font-bold text-ink/80">
-            我是怎么回你的
+            {t('mirror.strategy')}
           </h3>
           <p className="text-[15px] leading-relaxed text-ink/70">
             {data.strategy}
           </p>
         </section>
 
-        {/* 3. 我可能没看到的地方（可种下） */}
+        {/* 3. {t('mirror.blindspots')}（可种下） */}
         <section className="line-reveal" style={{ animationDelay: (data.profileContext ? 240 : 180) + 'ms' }}>
           <h3 className="mb-2.5 text-sm font-bold text-ink/80">
-            我可能没看到的地方
+            {t('mirror.blindspots')}
           </h3>
           <ul className="space-y-2.5">
             {data.blindspots.map((text, i) => {
@@ -143,13 +145,13 @@ export default function MirrorPanel({ data, sessionId }: Props) {
                           : 'bg-sage/10 text-sage-deep/70'
                       }`}
                     >
-                      {isJustPlanted ? '已种下 🌱' : '已在花园里'}
+                      {isJustPlanted ? t('mirror.justPlanted') : t('mirror.planted')}
                     </span>
                   ) : (
                     <button
                       onClick={() => handlePlant(text)}
                       disabled={plantingText !== null}
-                      title="把这个盲点种进花园，用后来的反思养大它"
+                      title={t('mirror.plantTitle')}
                       className="group mt-0.5 flex flex-shrink-0 items-center gap-1 rounded-full border border-sage/30 bg-sage/5 px-2.5 py-1 text-[11px] text-sage-deep transition-all duration-300 hover:border-sage/50 hover:bg-sage/15 hover:shadow-soft disabled:opacity-50"
                     >
                       {/* 小种子图标 */}
@@ -157,7 +159,7 @@ export default function MirrorPanel({ data, sessionId }: Props) {
                         <ellipse cx="6" cy="7.5" rx="3" ry="2.6" fill="currentColor" opacity="0.55" />
                         <path d="M6 5 Q6.5 2.5 4.5 1.5" fill="none" stroke="currentColor" strokeWidth="1.1" strokeLinecap="round" />
                       </svg>
-                      {plantingText === text ? '种下中…' : '种下这个盲点'}
+                      {plantingText === text ? t('mirror.planting') : t('mirror.plant')}
                     </button>
                   )}
                 </li>
@@ -168,9 +170,9 @@ export default function MirrorPanel({ data, sessionId }: Props) {
           {/* 种下后的轻提示 */}
           {justPlanted && (
             <p className="mt-2 animate-fade-in text-[11px] text-sage-deep/80">
-              它会在你再次查看、写日记、或试试换框模式时，慢慢发芽。
+              {t('mirror.plantHint')}
               <Link to="/corner/blindspot-garden" className="ml-1 underline decoration-sage/40 underline-offset-2 hover:text-sage-deep">
-                去花园看看 →
+                {t('mirror.goGarden')}
               </Link>
             </p>
           )}
@@ -178,15 +180,15 @@ export default function MirrorPanel({ data, sessionId }: Props) {
           {/* 查看触发成熟的彩蛋 */}
           {matureHint && (
             <p className="mt-2 animate-fade-in rounded-xl bg-sage/10 px-3 py-2 text-[11px] leading-relaxed text-sage-deep">
-              🌱 你又一次看见它——花园里的「{matureHint}」悄悄长大了。
+              🌱 {matureHint}
             </p>
           )}
         </section>
 
-        {/* 4. 我得老实说 */}
+        {/* 4. {t('mirror.limitation')} */}
         <section className="line-reveal" style={{ animationDelay: (data.profileContext ? 330 : 270) + 'ms' }}>
           <h3 className="mb-2.5 text-sm font-bold text-ink/80">
-            我得老实说
+            {t('mirror.limitation')}
           </h3>
           <p className="text-[15px] italic leading-relaxed text-ink/55">
             {data.limitation}

@@ -20,6 +20,7 @@ import {
   createSession,
   deleteSession,
 } from '@/services/api'
+import { useLang, localeOf } from '@/i18n'
 import HandDrawnIcon from '@/components/common/HandDrawnIcon'
 import EchoLogo from '@/components/common/EchoLogo'
 
@@ -40,6 +41,7 @@ export default function Sidebar({
   open,
   onToggle,
 }: Props) {
+  const { t, lang } = useLang()
   const [sessions, setSessions] = useState<ChatSession[]>([])
   const [loading, setLoading] = useState(true)
   const [creating, setCreating] = useState(false)
@@ -109,13 +111,13 @@ export default function Sidebar({
     const diffMs = now.getTime() - d.getTime()
     const diffMin = Math.floor(diffMs / 60000)
 
-    if (diffMin < 1) return '刚刚'
-    if (diffMin < 60) return `${diffMin} 分钟前`
+    if (diffMin < 1) return t('sidebar.justNow')
+    if (diffMin < 60) return t('sidebar.minAgo', { n: diffMin })
     const diffHr = Math.floor(diffMin / 60)
-    if (diffHr < 24) return `${diffHr} 小时前`
+    if (diffHr < 24) return t('sidebar.hourAgo', { n: diffHr })
     const diffDay = Math.floor(diffHr / 24)
-    if (diffDay < 7) return `${diffDay} 天前`
-    return d.toLocaleDateString('zh-CN', { month: 'short', day: 'numeric' })
+    if (diffDay < 7) return t('sidebar.dayAgo', { n: diffDay })
+    return d.toLocaleDateString(localeOf(lang), { month: 'short', day: 'numeric' })
   }
 
   /* ===== 收起态：只显示一个窄条 + 按钮 ===== */
@@ -125,8 +127,8 @@ export default function Sidebar({
         {/* v2.0 浮动展开按钮（浅杏色） */}
         <button
           onClick={onToggle}
-          aria-label="展开对话历史"
-          title="对话历史"
+          aria-label={t('sidebar.expand')}
+          title={t('chat.history')}
           className="fixed left-0 top-1/2 z-30 -translate-y-1/2 rounded-r-xl bg-apricot/60 px-1.5 py-3 shadow-soft transition-all duration-200 hover:bg-apricot hover:shadow-glow"
         >
           <HandDrawnIcon name="chat-bubble" className="h-5 w-5 text-milkBrown" />
@@ -140,14 +142,14 @@ export default function Sidebar({
     <div className="flex h-full w-[260px] flex-shrink-0 flex-col border-r border-milkBrown/10 bg-apricot/20 backdrop-blur-sm transition-all duration-300 ease-soft">
       {/* 头部：标题 + 新建 + 收起 */}
       <div className="flex items-center justify-between border-b border-milkBrown/8 px-4 py-3">
-        <h2 className="text-sm font-semibold text-milkBrown">对话记录</h2>
+        <h2 className="text-sm font-semibold text-milkBrown">{t('sidebar.title')}</h2>
         <div className="flex items-center gap-1">
           {/* 新建 */}
           <button
             onClick={handleNewChat}
             disabled={creating}
-            aria-label="新建对话"
-            title="新建对话"
+            aria-label={t('sidebar.new')}
+            title={t('sidebar.new')}
             className="interactive-hover flex h-7 w-7 items-center justify-center rounded-lg text-milkBrown/50 transition-all duration-200 hover:bg-apricot/40 hover:text-milkBrown disabled:opacity-40"
           >
             <HandDrawnIcon
@@ -158,8 +160,8 @@ export default function Sidebar({
           {/* 收起 */}
           <button
             onClick={onToggle}
-            aria-label="收起"
-            title="收起"
+            aria-label={t('sidebar.collapse')}
+            title={t('sidebar.collapse')}
             className="flex h-7 w-7 items-center justify-center rounded-lg text-milkBrown/40 transition-all duration-200 hover:bg-apricot/30 hover:text-milkBrown"
           >
             <HandDrawnIcon name="panel-left-close" className="h-4 w-4" />
@@ -171,15 +173,15 @@ export default function Sidebar({
       <div className="flex-1 overflow-y-auto px-3 py-2.5">
         {loading ? (
           <div className="flex items-center justify-center py-8 text-xs text-hint">
-            加载中…
+            {t('sidebar.loading')}
           </div>
         ) : sessions.length === 0 ? (
           /* 空状态 */
           <div className="px-2 py-10 text-center">
             <EchoLogo size="sm" showText={false} className="mx-auto mb-3 h-16 w-auto opacity-40" />
             <p className="text-xs leading-relaxed text-hint">
-              还没有对话记录<br />
-              点上方 ➕ 开始吧
+              {t('sidebar.empty1')}<br />
+              {t('sidebar.empty2')}
             </p>
           </div>
         ) : (
@@ -212,14 +214,14 @@ export default function Sidebar({
                           isActive ? 'text-milkBrown' : 'text-milkBrown/70'
                         }`}
                       >
-                        {s.title || '新的对话'}
+                        {s.title || t('sidebar.defaultTitle')}
                       </span>
                     </div>
                     {/* 删除按钮（hover 显示） */}
                     <button
                       onClick={(e) => handleDelete(e, s.id)}
                       disabled={deletingId === s.id}
-                      aria-label="删除此对话"
+                      aria-label={t('sidebar.delete')}
                       className="flex h-5 w-5 flex-shrink-0 items-center justify-center rounded opacity-0 transition-all duration-150 group-hover:opacity-100 hover:bg-red-50 hover:text-red-400 disabled:opacity-50"
                     >
                       <HandDrawnIcon
@@ -235,7 +237,7 @@ export default function Sidebar({
                     {s.messageCount > 0 && (
                       <>
                         <span>·</span>
-                        <span>{s.messageCount} 条</span>
+                        <span>{t('sidebar.msgs', { n: s.messageCount })}</span>
                       </>
                     )}
                   </div>

@@ -13,23 +13,27 @@ import { useEffect, useRef, useState, useCallback, type KeyboardEvent } from 're
 import type { ChatMessage } from '@/types'
 import { sendChat, getLabVersions, updateSessionTitle, analyzeSessionEmotion, growBlindspot } from '@/services/api'
 import { useApp } from '@/context/AppContext'
+import { useLang } from '@/i18n'
 import { genId, isLateNight } from '@/utils/time'
 import HandDrawnIcon from '@/components/common/HandDrawnIcon'
 import ChatBubble from '@/features/chat/ChatBubble'
 import BreathingOverlay from '@/features/chat/BreathingOverlay'
 import Sidebar from '@/components/chat/Sidebar'
 
-/** 初始 AI 开场白 */
-const INITIAL_MESSAGES: ChatMessage[] = [
-  {
-    id: genId(),
-    role: 'ai',
-    text: '我在。今天，想聊点什么？',
-    timestamp: Date.now(),
-  },
-]
+/** 初始 AI 开场白（按当前语言生成） */
+function initialMessages(t: (k: string) => string): ChatMessage[] {
+  return [
+    {
+      id: genId(),
+      role: 'ai',
+      text: t('chat.initial'),
+      timestamp: Date.now(),
+    },
+  ]
+}
 
 export default function ChatPage() {
+  const { t } = useLang()
   const {
     sessionId,
     setSessionId,
@@ -40,7 +44,7 @@ export default function ChatPage() {
   } = useApp()
 
   // 消息列表
-  const [messages, setMessages] = useState<ChatMessage[]>(INITIAL_MESSAGES)
+  const [messages, setMessages] = useState<ChatMessage[]>(() => initialMessages(t))
   const [input, setInput] = useState('')
   const [sending, setSending] = useState(false)
   const [showBreathing, setShowBreathing] = useState(false)
@@ -82,7 +86,7 @@ export default function ChatPage() {
 
     // 切换到新会话时重置消息
     if (currId !== prevId) {
-      setMessages(INITIAL_MESSAGES)
+      setMessages(initialMessages(t))
       setSummarized(false)
       firstUserMsgRef.current = null
       setInput('')
@@ -286,8 +290,8 @@ export default function ChatPage() {
           {!sidebarOpen && (
             <button
               onClick={toggleSidebar}
-              aria-label="展开对话历史"
-              title="对话历史"
+              aria-label={t('sidebar.expand')}
+              title={t('chat.history')}
               className="interactive-hover flex h-9 w-9 items-center justify-center rounded-xl text-ink/40 hover:bg-apricot/30 hover:text-milkBrown"
             >
               <HandDrawnIcon name="panel-left-close" className="h-5 w-5" />
@@ -295,10 +299,10 @@ export default function ChatPage() {
           )}
           <div className="flex-1">
             <h1 className="text-base font-semibold text-milkBrown">
-              Echo 深夜陪伴你
+              {t('chat.title')}
             </h1>
             {activeChatId && (
-              <p className="text-[11px] text-hint">正在倾听你的声音</p>
+              <p className="text-[11px] text-hint">{t('chat.listening')}</p>
             )}
           </div>
         </div>
@@ -331,7 +335,7 @@ export default function ChatPage() {
                   className="interactive-hover inline-flex items-center gap-1.5 rounded-full bg-apricot/40 px-4 py-1.5 text-xs font-semibold text-milkBrown transition-all duration-300 ease-soft hover:bg-apricot/60"
                 >
                   <HandDrawnIcon name="sparkle" className="h-3.5 w-3.5" />
-                  看看 AI 还能怎么回
+                  {t('chat.lab')}
                 </button>
               </div>
             )}
@@ -344,7 +348,7 @@ export default function ChatPage() {
                 onChange={(e) => setInput(e.target.value)}
                 onKeyDown={handleKeyDown}
                 rows={1}
-                placeholder="想说点什么……就敲在这里"
+                placeholder={t('chat.placeholder')}
                 className="max-h-32 flex-1 resize-none bg-transparent px-1 py-1.5 text-[15px] text-ink placeholder:text-hint focus:outline-none"
                 disabled={sending}
               />
@@ -352,7 +356,7 @@ export default function ChatPage() {
               <button
                 onClick={handleSend}
                 disabled={!input.trim() || sending}
-                aria-label="发送"
+                aria-label={t('chat.send')}
                 className="interactive-hover flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full bg-apricot text-milkBrown shadow-soft transition-all duration-300 ease-soft hover:bg-apricot-light hover:shadow-glow disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:scale-100"
               >
                 <HandDrawnIcon name="paper-plane" className="h-5 w-5" />

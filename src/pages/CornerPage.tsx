@@ -13,6 +13,7 @@ import { getInsights, completeQuest, getGlimmerPuzzle } from '@/services/api'
 import type { GlimmerPuzzle } from '@/types'
 import HandDrawnIcon from '@/components/common/HandDrawnIcon'
 import Garden from '@/components/common/Garden'
+import { useLang } from '@/i18n'
 
 interface Insights {
   mainTheme: string
@@ -25,6 +26,7 @@ interface Insights {
 }
 
 export default function CornerPage() {
+  const { t } = useLang()
   const [data, setData] = useState<Insights | null>(null)
   const [loading, setLoading] = useState(true)
   const [refreshing, setRefreshing] = useState(false)
@@ -108,7 +110,7 @@ export default function CornerPage() {
         {/* 返回按钮 */}
         <button
           onClick={() => window.history.back()}
-          aria-label="返回"
+          aria-label={t('corner.back')}
           className="interactive-hover flex h-10 w-10 items-center justify-center rounded-full bg-white shadow-soft text-milkBrown transition-all duration-300"
         >
           <HandDrawnIcon name="arrow-left" className="h-5 w-5" />
@@ -118,7 +120,7 @@ export default function CornerPage() {
         <button
           onClick={handleRefresh}
           disabled={refreshing}
-          aria-label="刷新数据"
+          aria-label={t('corner.refresh')}
           className={`interactive-hover flex h-10 w-10 items-center justify-center rounded-full bg-white shadow-soft transition-all duration-300 ${
             refreshing ? 'animate-spin opacity-60' : 'text-milkBrown hover:text-amber'
           }`}
@@ -141,10 +143,10 @@ export default function CornerPage() {
 
           {/* 标题组 */}
           <h1 className="mt-2 font-serif text-3xl font-bold italic text-milkBrown mb-1.5">
-            我的角落 🏠
+            {t('corner.title')}
           </h1>
           <p className="text-sm text-milkBrown/55 leading-relaxed">
-            这里记着你一点一点长大的痕迹。
+            {t('corner.subtitle')}
           </p>
         </div>
       </section>
@@ -152,17 +154,17 @@ export default function CornerPage() {
       {/* ===== 中部文案："悄悄开花了" ===== */}
       <div className="mx-auto max-w-lg px-4 pb-6 text-center">
         <p className="text-xl font-semibold text-milkBrown mb-1">
-          悄悄开花了 🌱
+          {t('corner.bloom')}
         </p>
         <p className="text-[13px] text-hint">
-          每一件小事，都让你长大一点
+          {t('corner.bloomDesc')}
         </p>
       </div>
 
       {/* ===== 数据卡片（3 张等宽横向排列） ===== */}
       <section className="mx-auto max-w-lg px-4 pb-7">
         <div className="grid grid-cols-3 gap-3">
-          {/* 本周完成的任务 */}
+          {/* {t('corner.cardQuest')} */}
           <div className="interactive-hover group overflow-hidden rounded-2xl border border-milkBrown/6 bg-white p-4 text-center shadow-soft transition-all duration-300 hover:-translate-y-0.5 hover:shadow-soft-hover">
             <div className="mb-2 flex justify-center">
               <span className="flex h-9 w-9 items-center justify-center rounded-full bg-macaron-pink/15 transition-colors group-hover:bg-macaron-pink/25">
@@ -172,11 +174,11 @@ export default function CornerPage() {
             <p className="text-3xl font-extrabold text-milkBrown tabular-nums leading-none">
               {loading ? '–' : data?.completedQuests ?? 0}
             </p>
-            <p className="mt-1 text-[11px] text-hint">件</p>
-            <p className="text-[10px] text-hint/70">本周完成的任务</p>
+            <p className="mt-1 text-[11px] text-hint">{t('corner.unitQuest')}</p>
+            <p className="text-[10px] text-hint/70">{t('corner.cardQuest')}</p>
           </div>
 
-          {/* 记录的日记 */}
+          {/* {t('corner.cardJournal')} */}
           <div className="interactive-hover group overflow-hidden rounded-2xl border border-milkBrown/6 bg-white p-4 text-center shadow-soft transition-all duration-300 hover:-translate-y-0.5 hover:shadow-soft-hover">
             <div className="mb-2 flex justify-center">
               <span className="flex h-9 w-9 items-center justify-center rounded-full bg-macaron-green/15 transition-colors group-hover:bg-macaron-green/25">
@@ -186,11 +188,11 @@ export default function CornerPage() {
             <p className="text-3xl font-extrabold text-milkBrown tabular-nums leading-none">
               {loading ? '–' : data?.journalCount ?? 0}
             </p>
-            <p className="mt-1 text-[11px] text-hint">页</p>
-            <p className="text-[10px] text-hint/70">记录的日记</p>
+            <p className="mt-1 text-[11px] text-hint">{t('corner.unitJournal')}</p>
+            <p className="text-[10px] text-hint/70">{t('corner.cardJournal')}</p>
           </div>
 
-          {/* 发现的盲点 */}
+          {/* {t('corner.cardBlind')} */}
           <div className="interactive-hover group overflow-hidden rounded-2xl border border-milkBrown/6 bg-white p-4 text-center shadow-soft transition-all duration-300 hover:-translate-y-0.5 hover:shadow-soft-hover">
             <div className="mb-2 flex justify-center">
               <span className="flex h-9 w-9 items-center justify-center rounded-full bg-macaron-blue/15 transition-colors group-hover:bg-macaron-blue/25">
@@ -200,8 +202,8 @@ export default function CornerPage() {
             <p className="text-3xl font-extrabold text-milkBrown tabular-nums leading-none">
               {loading ? '–' : data?.blindspotCount ?? 0}
             </p>
-            <p className="mt-1 text-[11px] text-hint">次</p>
-            <p className="text-[10px] text-hint/70">发现的盲点</p>
+            <p className="mt-1 text-[11px] text-hint">{t('corner.unitBlind')}</p>
+            <p className="text-[10px] text-hint/70">{t('corner.cardBlind')}</p>
           </div>
         </div>
       </section>
@@ -211,11 +213,11 @@ export default function CornerPage() {
         <section className="mx-auto max-w-lg px-4 pb-7">
           <div className="overflow-hidden rounded-2xl border border-milkBrown/6 bg-white p-5 shadow-soft">
             <div className="mb-3 flex items-baseline justify-between">
-              <h3 className="text-sm font-semibold text-milkBrown">情绪拼图 🧩</h3>
+              <h3 className="text-sm font-semibold text-milkBrown">{t('corner.puzzleTitle')}</h3>
               <p className="text-[11px] text-hint">
                 {puzzle.totalCompleted > 0
-                  ? `已收集 ${puzzle.totalCompleted} 个微光`
-                  : '完成微光任务，一块块点亮它'}
+                  ? t('corner.puzzleCollected', { n: puzzle.totalCompleted })
+                  : t('corner.puzzleEmpty')}
               </p>
             </div>
 
@@ -246,8 +248,8 @@ export default function CornerPage() {
 
             <p className="mt-3 text-center text-[11px] text-hint">
               {puzzle.progressToNext === 0 && puzzle.totalCompleted > 0
-                ? '刚刚点亮了一块新碎片 ✨'
-                : `再完成 ${7 - puzzle.progressToNext} 个微光任务，解锁下一块`}
+                ? t('corner.puzzleNewPiece')
+                : t('corner.puzzleNext', { n: 7 - puzzle.progressToNext })}
             </p>
           </div>
         </section>
@@ -260,7 +262,7 @@ export default function CornerPage() {
           className="interactive-hover inline-flex items-center gap-2 rounded-full bg-amber px-6 py-3 text-base font-semibold text-white shadow-glow transition-all duration-300 ease-soft hover:bg-amber-light hover:text-milkBrown"
         >
           <HandDrawnIcon name="plus" className="h-5 w-5" />
-          今天我做成了一件小事
+          {t('corner.questBtn')}
         </button>
       </section>
 
@@ -275,17 +277,17 @@ export default function CornerPage() {
             <path d="M3 14 L3 7 Q3 2.5 8 2.5 Q13 2.5 13 7 L13 14" fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" />
             <circle cx="8" cy="9" r="1.6" fill="currentColor" opacity="0.5" />
           </svg>
-          去盲点花园走走
+          {t('corner.gardenLink')}
         </Link>
         <p className="mt-2 text-[10.5px] text-hint/60">
-          AI 没看到的那些地方，在那里慢慢长大
+          {t('corner.gardenDesc')}
         </p>
       </section>
 
       {/* ===== 底部收尾文案 ===== */}
       <footer className="pb-12 text-center">
         <p className="text-xs text-hint/65 italic leading-relaxed">
-          这里没有评判，只有一盏亮着的小灯。
+          {t('corner.footer')}
         </p>
       </footer>
 
@@ -301,7 +303,7 @@ export default function CornerPage() {
             {/* 弹窗头部 */}
             <div className="mb-4 flex items-center justify-between">
               <h3 className="text-lg font-bold text-milkBrown">
-                🌸 记录今天的小事
+                {t('corner.modal.title')}
               </h3>
               <button
                 onClick={() => setShowQuestModal(false)}
@@ -318,22 +320,22 @@ export default function CornerPage() {
                   <HandDrawnIcon name="sprout-green" className="h-8 w-8 text-macaron-green" />
                 </div>
                 <p className="text-lg font-semibold text-milkBrown">
-                  记录成功！🎉
+                  {t('corner.modal.successTitle')}
                 </p>
                 <p className="mt-1 text-sm text-hint">
-                  这件小事已经变成你成长树上的一片新叶子
+                  {t('corner.modal.successDesc')}
                 </p>
               </div>
             ) : (
               <>
                 {/* 输入区域 */}
                 <p className="mb-3 text-sm text-hint">
-                  哪怕再小的事也值得被记住——喝够八杯水、按时吃了早饭、对陌生人说了谢谢……
+                  {t('corner.modal.desc')}
                 </p>
                 <textarea
                   value={questInput}
                   onChange={(e) => setQuestInput(e.target.value)}
-                  placeholder="今天我做了一件……"
+                  placeholder={t('corner.modal.placeholder')}
                   rows={3}
                   maxLength={200}
                   autoFocus
@@ -358,7 +360,7 @@ export default function CornerPage() {
                         : 'cursor-not-allowed bg-milkBrown/20'
                     }`}
                   >
-                    {questSaving ? '保存中…' : '记录下来 ✨'}
+                    {questSaving ? t('corner.modal.saving') : t('corner.modal.save')}
                   </button>
                 </div>
               </>

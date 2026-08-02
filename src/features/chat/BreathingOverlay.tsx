@@ -9,18 +9,13 @@
  */
 import { useEffect, useRef, useState } from 'react'
 import HandDrawnIcon from '@/components/common/HandDrawnIcon'
+import { useLang } from '@/i18n'
 
 interface Props {
   onClose: () => void
 }
 
 type Phase = 'idle' | 'inhale' | 'hold' | 'exhale'
-
-const PHASE_TEXT: Record<Exclude<Phase, 'idle'>, string> = {
-  inhale: '慢慢吸气',
-  hold: '屏住一会儿',
-  exhale: '轻轻呼出',
-}
 
 /** 4-7-8 呼吸各阶段真实持续时间（ms），用于 setTimeout 控制节奏 */
 const PHASE_DURATION: Record<Exclude<Phase, 'idle'>, number> = {
@@ -48,6 +43,12 @@ const SCALE: Record<Exclude<Phase, 'idle'>, number> = {
 const TOTAL_CYCLES = 2
 
 export default function BreathingOverlay({ onClose }: Props) {
+  const { t } = useLang()
+  const PHASE_TEXT: Record<Exclude<Phase, 'idle'>, string> = {
+    inhale: t('breath.phase.inhale'),
+    hold: t('breath.phase.hold'),
+    exhale: t('breath.phase.exhale'),
+  }
   const [breathing, setBreathing] = useState(false)
   const [phase, setPhase] = useState<Phase>('idle')
   const [cycle, setCycle] = useState(0)
@@ -126,9 +127,9 @@ export default function BreathingOverlay({ onClose }: Props) {
             <p className="font-hand text-3xl text-ink/80">{PHASE_TEXT[phase]}</p>
           ) : (
             <p className="font-hand text-2xl leading-relaxed text-ink/80">
-              不需要解决任何问题，
+              {t('breath.text1')}
               <br />
-              就和自己待一小会儿。
+              {t('breath.text2')}
             </p>
           )}
         </div>
@@ -144,11 +145,11 @@ export default function BreathingOverlay({ onClose }: Props) {
               className="inline-flex items-center gap-2 rounded-3xl bg-amber px-7 py-3 font-semibold text-white shadow-glow transition-all duration-300 ease-soft hover:scale-[1.03] hover:bg-amber-light"
             >
               <HandDrawnIcon name="breath" className="h-5 w-5" />
-              试试 30 秒呼吸引导
+              {t('breath.start')}
             </button>
           ) : (
             <p className="text-sm text-ink/50">
-              第 {Math.min(cycle + 1, TOTAL_CYCLES)} / {TOTAL_CYCLES} 轮 · 跟着圆圈呼吸
+              {t('breath.round', { n: Math.min(cycle + 1, TOTAL_CYCLES), total: TOTAL_CYCLES })}
             </p>
           )}
 
@@ -157,21 +158,21 @@ export default function BreathingOverlay({ onClose }: Props) {
               onClick={onClose}
               className="rounded-2xl px-5 py-2 text-sm font-medium text-ink/55 transition-colors duration-300 hover:bg-ink/5 hover:text-ink"
             >
-              继续聊天
+              {t('breath.continue')}
             </button>
             <button
               onClick={() => {
                 if (navigator.share) {
                   navigator
-                    .share({ title: 'Echo · 呼吸引导', text: '在 Echo 跟着圆圈呼吸，很平静。' })
+                    .share({ title: t('breath.shareTitle'), text: t('breath.shareText') })
                     .catch(() => {})
                 } else {
-                  alert('请截图分享给朋友～')
+                  alert(t('breath.screenshot'))
                 }
               }}
               className="rounded-2xl px-5 py-2 text-sm font-medium text-ink/55 transition-colors duration-300 hover:bg-ink/5 hover:text-ink"
             >
-              转发截图
+              {t('breath.share')}
             </button>
           </div>
         </div>

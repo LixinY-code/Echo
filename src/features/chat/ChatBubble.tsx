@@ -11,6 +11,7 @@
  * v3.0 更新：用户消息增加小圆形头像（对齐图二参考）
  */
 import type { ChatMessage } from '@/types'
+import { useLang } from '@/i18n'
 import HandDrawnIcon from '@/components/common/HandDrawnIcon'
 import MirrorPanel from './MirrorPanel'
 import LabVersions from './LabVersions'
@@ -33,6 +34,7 @@ function TypingDots() {
 }
 
 export default function ChatBubble({ message, onToggleMirror, onRetry }: Props) {
+  const { t } = useLang()
   const isUser = message.role === 'user'
 
   /* ===== 用户消息（v3.0：右侧 + 小头像 + 白色气泡） ===== */
@@ -76,13 +78,13 @@ export default function ChatBubble({ message, onToggleMirror, onRetry }: Props) 
                   <span className="opacity-50 grayscale">
                     <HandDrawnIcon name="candle" className="h-5 w-5" />
                   </span>
-                  <span className="text-sm">这盏灯好像闪了一下，没能回上来。</span>
+                  <span className="text-sm">{t('bubble.error')}</span>
                   {onRetry && (
                     <button
                       onClick={() => onRetry(message.id)}
                       className="ml-1 text-sm font-semibold text-milkBrown underline decoration-milkBrown/30 underline-offset-2 hover:decoration-milkBrown"
                     >
-                      再试一次
+                      {t('bubble.retry')}
                     </button>
                   )}
                 </div>
@@ -106,7 +108,7 @@ export default function ChatBubble({ message, onToggleMirror, onRetry }: Props) 
                     name="mirror"
                     className="h-3.5 w-3.5 transition-transform group-hover:scale-110"
                   />
-                  为什么这样回？
+                  {t('bubble.why')}
                   <HandDrawnIcon
                     name="chevron-down"
                     className={`h-3.5 w-3.5 transition-transform duration-300 ${

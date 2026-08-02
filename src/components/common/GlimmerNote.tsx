@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useState, useCallback } from 'react'
 import { getTodayGlimmers, completeGlimmer } from '@/services/api'
 import type { GlimmerQuest, GlimmerPuzzle } from '@/types'
+import { useLang } from '@/i18n'
 
 /**
  * GlimmerNote — 微光任务小纸条
@@ -74,6 +75,7 @@ function DandelionBurst({ onDone }: { onDone: () => void }) {
 
 /** 拼图进度点（7 个点 = 1 块碎片） */
 function PuzzleDots({ puzzle }: { puzzle: GlimmerPuzzle }) {
+  const { t } = useLang()
   return (
     <div className="flex items-center justify-between gap-2 border-t border-milkBrown/8 pt-2.5">
       <div className="flex items-center gap-1">
@@ -87,13 +89,14 @@ function PuzzleDots({ puzzle }: { puzzle: GlimmerPuzzle }) {
         ))}
       </div>
       <span className="text-[10px] text-hint">
-        {puzzle.pieces > 0 ? `🧩 ${puzzle.pieces} 块碎片` : '集满 7 个微光得一块 🧩'}
+        {puzzle.pieces > 0 ? t('glimmer.puzzlePieces', { n: puzzle.pieces }) : t('glimmer.puzzleHint')}
       </span>
     </div>
   )
 }
 
 const GlimmerNote: React.FC = () => {
+  const { t } = useLang()
   const [quests, setQuests] = useState<GlimmerQuest[]>([])
   const [puzzle, setPuzzle] = useState<GlimmerPuzzle | null>(null)
   const [loading, setLoading] = useState(true)
@@ -155,7 +158,7 @@ const GlimmerNote: React.FC = () => {
     return (
       <button
         onClick={() => setExpanded(true)}
-        aria-label="打开今日微光任务"
+        aria-label={t('glimmer.open')}
         className="group fixed bottom-5 right-5 z-40 block"
       >
         <div className="relative animate-note-sway">
@@ -166,7 +169,7 @@ const GlimmerNote: React.FC = () => {
           />
           <div className="rounded-[3px] bg-[#FFFDF4] px-4 py-2.5 ring-1 ring-milkBrown/8 shadow-[0_8px_24px_-8px_rgba(166,124,82,0.35)] transition-transform duration-300 group-hover:-translate-y-0.5">
             <p className="font-hand text-base leading-none text-milkBrown">
-              {allDone ? '🌙 微光已收好' : `✨ 微光任务 ×${remaining.length}`}
+              {allDone ? t('glimmer.collapsedDone') : t('glimmer.collapsed', { n: remaining.length })}
             </p>
           </div>
         </div>
@@ -194,12 +197,12 @@ const GlimmerNote: React.FC = () => {
           {/* 头部 */}
           <div className="mb-3 flex items-start justify-between">
             <div>
-              <p className="font-hand text-xl leading-tight text-milkBrown">今日微光</p>
-              <p className="mt-0.5 text-[10px] text-hint">做不做都没关系，它们 midnight 就会悄悄换掉</p>
+              <p className="font-hand text-xl leading-tight text-milkBrown">{t('glimmer.title')}</p>
+              <p className="mt-0.5 text-[10px] text-hint">{t('glimmer.subtitle')}</p>
             </div>
             <button
               onClick={() => setExpanded(false)}
-              aria-label="收起"
+              aria-label={t('glimmer.close')}
               className="flex h-6 w-6 items-center justify-center rounded-full text-hint/70 transition-colors hover:bg-apricot/40 hover:text-milkBrown"
             >
               ✕
@@ -211,9 +214,9 @@ const GlimmerNote: React.FC = () => {
             <div className="py-3 text-center">
               <p className="text-2xl">🌙</p>
               <p className="mt-1 text-xs leading-relaxed text-milkBrown/70">
-                今天的微光都收好了。
+                {t('glimmer.allDone1')}
                 <br />
-                明天见。
+                {t('glimmer.allDone2')}
               </p>
             </div>
           ) : (
@@ -239,12 +242,12 @@ const GlimmerNote: React.FC = () => {
                   {/* 操作区 */}
                   <div className="relative mt-1 flex justify-end">
                     {quest.completed ? (
-                      <span className="text-[10px] text-sage-deep">🌱 已收进今天的日记</span>
+                      <span className="text-[10px] text-sage-deep">{t('glimmer.saved')}</span>
                     ) : burstingId === quest.id ? (
                       <span className="relative flex h-7 w-16 items-center justify-center">
                         {/* 蒲公英动画从这里爆开 */}
                         <DandelionBurst onDone={handleBurstDone} />
-                        <span className="text-[10px] text-hint">飞走啦…</span>
+                        <span className="text-[10px] text-hint">{t('glimmer.flying')}</span>
                       </span>
                     ) : (
                       <button
@@ -257,7 +260,7 @@ const GlimmerNote: React.FC = () => {
                           <line x1="8" y1="7" x2="8" y2="15" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" />
                           <circle cx="8" cy="4" r="3" fill="none" stroke="currentColor" strokeWidth="1" strokeDasharray="1.5 1.5" />
                         </svg>
-                        我做了
+                        {t('glimmer.didIt')}
                       </button>
                     )}
                   </div>
@@ -274,9 +277,9 @@ const GlimmerNote: React.FC = () => {
         {showPieceToast && (
           <div className="absolute -top-14 left-1/2 z-20 w-56 -translate-x-1/2 animate-fade-in-up rounded-2xl bg-white/95 px-4 py-2.5 text-center shadow-soft-lg ring-1 ring-amber/30 backdrop-blur-sm">
             <p className="text-[11px] leading-relaxed text-milkBrown">
-              🧩 集满 7 个微光，
-              <br />
-              一块情绪拼图碎片亮起来了
+              {t('glimmer.toast').split('\n').map((line, i) => (
+                <span key={i}>{line}{i === 0 && <br />}</span>
+              ))}
             </p>
           </div>
         )}

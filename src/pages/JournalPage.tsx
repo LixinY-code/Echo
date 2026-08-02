@@ -7,7 +7,8 @@
 import { useEffect, useState, useCallback } from 'react'
 import type { JournalEntry, Emotion } from '@/types'
 import { getJournals, createJournal, deleteJournal, growBlindspot } from '@/services/api'
-import { formatDateCN, formatTime } from '@/utils/time'
+import { formatTime } from '@/utils/time'
+import { useLang, localeOf } from '@/i18n'
 import HandDrawnIcon, { type IconName } from '@/components/common/HandDrawnIcon'
 import WarmButton from '@/components/common/WarmButton'
 import BackButton from '@/components/common/BackButton'
@@ -26,12 +27,19 @@ function emotionMeta(e: Emotion) {
 }
 
 export default function JournalPage() {
+  const { t, lang } = useLang()
   const [entries, setEntries] = useState<JournalEntry[]>([])
   const [loading, setLoading] = useState(true)
   const [editing, setEditing] = useState(false)
   const [draft, setDraft] = useState('')
   const [emotion, setEmotion] = useState<Emotion>('平静')
   const [saving, setSaving] = useState(false)
+
+  /** 按当前语言格式化日期 */
+  const fmtDate = (d: Date | string) => {
+    const dd = typeof d === 'string' ? new Date(d) : d
+    return dd.toLocaleDateString(localeOf(lang), { month: 'short', day: 'numeric', weekday: 'short' })
+  }
 
   const load = useCallback(async () => {
     setLoading(true)
@@ -83,21 +91,21 @@ export default function JournalPage() {
           className="mb-5 inline-flex items-center gap-1.5 text-sm text-ink/55 transition-colors hover:text-ink"
         >
           <HandDrawnIcon name="arrow-left" className="h-4 w-4" />
-          返回
+          {t('journal.back')}
         </button>
 
         <div className="paper-edge rounded-3xl p-6 shadow-soft">
-          <h2 className="mb-1 font-hand text-2xl text-ink/80">今天的一页</h2>
-          <p className="mb-5 text-xs text-ink/45">{formatDateCN(new Date())}</p>
+          <h2 className="mb-1 font-hand text-2xl text-ink/80">{t('journal.editTitle')}</h2>
+          <p className="mb-5 text-xs text-ink/45">{fmtDate(new Date())}</p>
 
           {/* 情绪选择 */}
-          <p className="mb-2 text-sm font-semibold text-ink/65">此刻的心情是…</p>
+          <p className="mb-2 text-sm font-semibold text-ink/65">{t('journal.moodPrompt')}</p>
           <div className="mb-5 flex flex-wrap gap-2">
             {EMOTIONS.map((e) => {
               const active = emotion === e.value
               return (
                 <button
-                  key={e.value}
+                  key={t(`emotion.${e.value}`)}
                   onClick={() => setEmotion(e.value)}
                   className={[
                     'inline-flex items-center gap-1.5 rounded-full px-3.5 py-1.5 text-sm font-medium transition-all duration-300 ease-soft hover:scale-[1.04]',
@@ -107,7 +115,7 @@ export default function JournalPage() {
                   ].join(' ')}
                 >
                   <HandDrawnIcon name={e.icon} className="h-3.5 w-3.5" />
-                  {e.value}
+                  {t(`emotion.${e.value}`)}
                 </button>
               )
             })}
@@ -119,13 +127,13 @@ export default function JournalPage() {
             onChange={(e) => setDraft(e.target.value)}
             autoFocus
             rows={10}
-            placeholder="把心里的话慢慢写下来……这里只有你能看到。"
+            placeholder={t('journal.placeholder')}
             className="w-full resize-none rounded-2xl border border-ink/8 bg-cream-50/60 bg-paper-lines p-4 text-[15px] leading-7 text-ink placeholder:text-ink/35 focus:border-amber/40 focus:outline-none focus:ring-2 focus:ring-amber/20"
           />
 
           <div className="mt-5 flex justify-end gap-3">
             <WarmButton variant="ghost" size="sm" onClick={() => setEditing(false)}>
-              不写了
+              {t('journal.cancel')}
             </WarmButton>
             <WarmButton
               variant="amber"
@@ -133,7 +141,7 @@ export default function JournalPage() {
               onClick={handleSave}
               disabled={!draft.trim() || saving}
             >
-              {saving ? '收存中…' : '收存这一页'}
+              {saving ? t('journal.saving') : t('journal.save')}
             </WarmButton>
           </div>
         </div>
@@ -148,8 +156,8 @@ export default function JournalPage() {
       {/* 标题 */}
       <div className="mb-7 flex items-end justify-between">
         <div>
-          <h1 className="font-hand text-3xl text-ink">情绪日记</h1>
-          <p className="mt-1 text-sm text-ink/50">只属于你的纸页，不会被 AI 阅读。</p>
+          <h1 className="font-hand text-3xl text-ink">{t('journal.title')}</h1>
+          <p className="mt-1 text-sm text-ink/50">{t('journal.subtitle')}</p>
         </div>
         <WarmButton
           variant="primary"
@@ -158,7 +166,7 @@ export default function JournalPage() {
           className="!rounded-full"
         >
           <HandDrawnIcon name="plus" className="h-4 w-4" />
-          写一页
+          {t('journal.new')}
         </WarmButton>
       </div>
 
@@ -184,7 +192,7 @@ export default function JournalPage() {
                 {/* 删除按钮 */}
                 <button
                   onClick={() => handleDelete(entry.id)}
-                  aria-label="删除"
+                  aria-label={t('journal.delete')}
                   className="absolute right-3 top-3 flex h-8 w-8 items-center justify-center rounded-full text-ink/30 opacity-0 transition-all duration-300 hover:bg-ink/5 hover:text-ink/60 group-hover:opacity-100"
                 >
                   <HandDrawnIcon name="trash" className="h-4 w-4" />
@@ -195,10 +203,10 @@ export default function JournalPage() {
                     className={`inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-semibold ${meta.color}`}
                   >
                     <HandDrawnIcon name={meta.icon} className="h-3 w-3" />
-                    {entry.emotion}
+                    {t(`emotion.${entry.emotion}`)}
                   </span>
                   <span className="text-xs text-ink/45">
-                    {formatDateCN(entry.date)} · {formatTime(entry.date)}
+                    {fmtDate(entry.date)} · {formatTime(entry.date)}
                   </span>
                 </div>
 
@@ -212,7 +220,7 @@ export default function JournalPage() {
       )}
 
       <p className="mt-8 text-center text-xs text-ink/35">
-        {entries.length > 0 ? `共 ${entries.length} 页 · 安静地陪你` : ''}
+        {entries.length > 0 ? t('journal.count', { n: entries.length }) : ''}
       </p>
     </div>
   )
@@ -220,15 +228,16 @@ export default function JournalPage() {
 
 /** 空状态 */
 function EmptyJournal({ onCreate }: { onCreate: () => void }) {
+  const { t } = useLang()
   return (
     <div className="flex flex-col items-center rounded-3xl border border-dashed border-ink/10 bg-cream-50/50 px-6 py-14 text-center">
       <HandDrawnIcon name="journal" className="mb-4 h-12 w-12 text-ink/25" />
-      <p className="font-hand text-2xl text-ink/65">还没有写下任何一页</p>
+      <p className="font-hand text-2xl text-ink/65">{t('journal.emptyTitle')}</p>
       <p className="mt-2 max-w-xs text-sm text-ink/45">
-        不必写得漂亮，哪怕只是一句"今天有点累"，也值得被记下来。
+        {t('journal.emptyDesc')}
       </p>
       <WarmButton variant="primary" size="sm" className="mt-6" onClick={onCreate}>
-        写下第一页
+        {t('journal.emptyBtn')}
       </WarmButton>
     </div>
   )
