@@ -1,19 +1,15 @@
 /**
- * CornerPage — "我的角落" 成长数据页（Echo v4.1）
+ * CornerPage — "我的角落" 成长数据页（Echo v4.4）
  *
  * 布局：上下流式居中布局，暖杏色柔和渐变背景
- * 主视觉：数据驱动的情绪果树（每颗果实=一次对话，hover 显示 300 字总结）+ 数据卡片
+ * 主视觉：Garden 生长花（随任务数生长：种子→嫩芽→长叶→开花）+ 数据卡片
  *
- * v4.1 更新：
- *  - 新增刷新按钮（重新加载 insights + emotion fruits）
- *  - 实现「今天做成了一件小事」弹窗输入 + 保存功能
- *  - 保留完整情绪果树（成长花）功能
+ * v4.4 更新：
+ *  - 移除情绪果树，生长花作为唯一主视觉居中展示
  */
 import { useEffect, useState, useCallback } from 'react'
-import { getInsights, getEmotionFruits, completeQuest } from '@/services/api'
-import type { EmotionFruitData } from '@/types'
+import { getInsights, completeQuest } from '@/services/api'
 import HandDrawnIcon from '@/components/common/HandDrawnIcon'
-import EmotionTree from '@/components/common/EmotionTree'
 import Garden from '@/components/common/Garden'
 
 interface Insights {
@@ -30,8 +26,6 @@ export default function CornerPage() {
   const [data, setData] = useState<Insights | null>(null)
   const [loading, setLoading] = useState(true)
   const [refreshing, setRefreshing] = useState(false)
-  // 真实情绪果实数据（成长花 / 情绪果树）
-  const [fruits, setFruits] = useState<EmotionFruitData[]>([])
 
   // 「今天做成了一件小事」弹窗状态
   const [showQuestModal, setShowQuestModal] = useState(false)
@@ -39,21 +33,14 @@ export default function CornerPage() {
   const [questSaving, setQuestSaving] = useState(false)
   const [questSuccess, setQuestSuccess] = useState(false)
 
-  /** 加载所有数据（insights + emotion fruits） */
+  /** 加载洞察数据 */
   const loadData = useCallback(async () => {
     try {
-      const [insightsResult, fruitsResult] = await Promise.all([
-        getInsights().catch((e) => {
-          console.warn('[corner] 加载洞察失败：', e)
-          return null
-        }),
-        getEmotionFruits().catch((e) => {
-          console.warn('[corner] 加载情绪果实失败：', e)
-          return [] as EmotionFruitData[]
-        }),
-      ])
+      const insightsResult = await getInsights().catch((e) => {
+        console.warn('[corner] 加载洞察失败：', e)
+        return null
+      })
       if (insightsResult) setData(insightsResult)
-      setFruits(fruitsResult)
     } finally {
       setLoading(false)
       setRefreshing(false)
@@ -129,27 +116,15 @@ export default function CornerPage() {
         </button>
       </div>
 
-      {/* ===== 主视觉区：情绪果树 + 生长花（对称排布）+ 标题 ===== */}
+      {/* ===== 主视觉区：生长花 + 标题 ===== */}
       <section className="relative mx-auto max-w-lg px-4 pt-4 pb-6">
         <div className="text-center">
-          {/* 对称布局：生长花（左） + 情绪果树（右）—— 同尺寸 */}
-          <div className="flex items-center justify-center gap-4 sm:gap-6">
-            {/* 左侧：Garden 生长花（与树同级大小） */}
-            <div className="flex-shrink-0">
-              <Garden
-                questCount={data?.completedQuests ?? 0}
-                size="xl"
-                className="opacity-90 hover:opacity-100 transition-opacity drop-shadow-sm"
-              />
-            </div>
-
-            {/* 右侧：EmotionTree 情绪果树（每颗果实 = 一次对话） */}
-            <EmotionTree
-              fruits={fruits}
-              fallbackCount={fruits.length > 0 ? fruits.length : undefined}
+          {/* 居中：Garden 生长花（随任务数生长：种子→嫩芽→长叶→开花） */}
+          <div className="flex items-center justify-center">
+            <Garden
+              questCount={data?.completedQuests ?? 0}
               size="xl"
-              animated={true}
-              className="h-[260px] w-auto max-w-[280px] drop-shadow-sm"
+              className="drop-shadow-sm"
             />
           </div>
 
@@ -159,11 +134,6 @@ export default function CornerPage() {
           </h1>
           <p className="text-sm text-milkBrown/55 leading-relaxed">
             这里记着你一点一点长大的痕迹。
-            {fruits.length > 0 && (
-              <span className="ml-1 text-amber/70">
-                已结出 {fruits.length} 颗果实 ✨
-              </span>
-            )}
           </p>
         </div>
       </section>
@@ -174,8 +144,7 @@ export default function CornerPage() {
           悄悄开花了 🌱
         </p>
         <p className="text-[13px] text-hint">
-          每一次对话，都结成一颗果实
-          {fruits.length > 0 && `（共 ${fruits.length} 颗）`}
+          每一件小事，都让你长大一点
         </p>
       </div>
 

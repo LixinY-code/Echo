@@ -36,23 +36,45 @@ export default function WelcomePage() {
           <EchoLogo size="lg" showText={true} animated={false} className="mx-auto h-32 w-auto" />
         </div>
 
-        {/* 问候语（v2.0 使用 milkBrown 色） */}
-        <p
-          className="max-w-md text-balance font-hand text-3xl leading-snug text-milkBrown sm:text-4xl animate-fade-in-up"
+        {/* 墙上的字条（胶带粘贴，手写体问候） */}
+        <div
+          className="relative w-full max-w-md animate-fade-in-up"
           style={{ animationDelay: '0.1s' }}
         >
-          {greeting}
-        </p>
-
-        {/* 副标题（v2.0 使用 hint 色） */}
-        <p
-          className="mt-5 max-w-sm text-sm leading-relaxed text-hint animate-fade-in-up"
-          style={{ animationDelay: '0.25s' }}
-        >
-          深夜里的一盏小台灯。
-          <br />
-          在这里，AI 会陪你说话，也会让你看见它如何说话。
-        </p>
+          {/* 胶带 — 左上 */}
+          <div
+            className="absolute -top-3 left-8 z-10 h-7 w-20 -rotate-[8deg] bg-[#F2DCB0]/70 shadow-[0_1px_2px_rgba(166,124,82,0.2)]"
+            style={{
+              clipPath:
+                'polygon(3% 0, 97% 0, 100% 15%, 98% 100%, 2% 100%, 0 15%)',
+            }}
+          />
+          {/* 胶带 — 右上 */}
+          <div
+            className="absolute -top-3 right-8 z-10 h-7 w-20 rotate-[7deg] bg-[#F2DCB0]/70 shadow-[0_1px_2px_rgba(166,124,82,0.2)]"
+            style={{
+              clipPath:
+                'polygon(3% 0, 97% 0, 100% 15%, 98% 100%, 2% 100%, 0 15%)',
+            }}
+          />
+          {/* 字条纸（微倾斜 + 横线纸纹 + 柔和投影） */}
+          <div
+            className="rotate-[-1.5deg] rounded-[3px] bg-[#FFFDF4] px-8 py-7 ring-1 ring-milkBrown/5 shadow-[0_12px_32px_-10px_rgba(166,124,82,0.35)]"
+            style={{
+              backgroundImage:
+                'repeating-linear-gradient(transparent, transparent 31px, rgba(166,124,82,0.09) 32px)',
+            }}
+          >
+            <p className="text-balance font-hand text-3xl leading-snug text-milkBrown sm:text-4xl">
+              {greeting}
+            </p>
+            <p className="mt-4 text-sm leading-relaxed text-hint">
+              深夜里的一盏小台灯。
+              <br />
+              在这里，AI 会陪你说话，也会让你看见它如何说话。
+            </p>
+          </div>
+        </div>
 
         {/* v2.0 两个大按钮（使用新色彩 token） */}
         <div
@@ -113,8 +135,8 @@ function DeskScene({ label }: { label: string }) {
         {/* 桌面 */}
         <path d="M60 320 L740 320 L780 400 L20 400 Z" fill="url(#desk)" opacity="0.7" />
 
-        {/* 台灯（v2.0 使用新 amber） */}
-        <g>
+        {/* 台灯（v2.0 使用新 amber，下移 24px 落在桌面上） */}
+        <g transform="translate(0 24)">
           <path
             d="M360 120 Q400 100 440 120 L430 175 Q400 185 370 175 Z"
             fill="#F2B880" /* v2.0 amber */
@@ -137,8 +159,8 @@ function DeskScene({ label }: { label: string }) {
           <path d="M485 300 L540 300 M485 308 L535 308 M560 300 L625 300 M560 308 L620 308" stroke="#E8D4B8" strokeWidth="1.5" />
         </g>
 
-        {/* 茶杯（v2.0 paper + milkBrown） */}
-        <g opacity="0.85">
+        {/* 茶杯（v2.0 paper + milkBrown，下移 6px 落在桌面上） */}
+        <g opacity="0.85" transform="translate(0 6)">
           <path d="M210 285 Q230 283 250 285 L248 310 Q230 314 212 310 Z" fill="#FFFBF5" stroke="#A67C52" strokeWidth="2" />
           <path d="M250 290 Q262 290 262 300 Q262 308 250 308" fill="none" stroke="#A67C52" strokeWidth="2" />
           {/* 热气（使用 sage 绿色保持不变） */}
