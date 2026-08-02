@@ -17,6 +17,7 @@ const NAV_ITEMS: NavItem[] = [
   { to: '/journal', icon: 'journal', label: '日记' },
   { to: '/insights', icon: 'insight', label: '周信' },
   { to: '/corner', icon: 'corner', label: '角落' },
+  { to: '/corner/blindspot-garden', icon: 'garden', label: '花园' },
 ]
 
 interface NavbarProps {
@@ -45,7 +46,9 @@ export default function Navbar({ onNewChat }: NavbarProps) {
         <div className="flex items-center gap-2">
           {/* 导航图标 */}
           {NAV_ITEMS.map((item) => {
-            const active = pathname.startsWith(item.to)
+            // '/corner' 精确匹配，避免花园子页面('/corner/blindspot-garden')同时点亮两个图标
+            const active =
+              item.to === '/corner' ? pathname === item.to : pathname.startsWith(item.to)
             return (
               <Link
                 key={item.to}

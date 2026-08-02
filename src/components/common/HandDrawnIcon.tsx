@@ -37,6 +37,7 @@ export type IconName =
   | 'flower-red'    // 红花（任务卡片）
   | 'sprout-green'   // 嫩枝（日记卡片）
   | 'tree-eye'      // 小树+眼睛（盲点卡片）
+  | 'garden'        // 花园（盲点花园导航入口）
 
 interface Props {
   name: IconName
@@ -260,6 +261,23 @@ const PATHS: Record<IconName, ReactNode> = {
       {/* 眼睛（叠加） */}
       <ellipse cx="17" cy="7" rx="4" ry="2.5" />
       <circle cx="17" cy="7" r="1.2" fill="currentColor" opacity="0.4" stroke="none" />
+    </>
+  ),
+  // 花园（盲点花园导航入口：土壤 + 嫩芽 + 旁边一颗待发芽的种子）
+  garden: (
+    <>
+      {/* 土壤弧线 */}
+      <path d="M3.5 19.5c2.5-1.3 5.3-2 8.5-2s6 .7 8.5 2" />
+      {/* 嫩芽主茎 */}
+      <path d="M12 17.5v-7" />
+      {/* 左叶 */}
+      <path d="M12 13.5c-2.2-2.2-4.8-2-6 .2 1.6-.6 3.8-.4 6-.2z" />
+      {/* 右叶 */}
+      <path d="M12 11.5c2.2-2.2 4.8-2 6 .2-1.6-.6-3.8-.4-6-.2z" />
+      {/* 顶端小叶尖 */}
+      <path d="M12 10.5c0-1.8 1.2-3 3-3.2-.3 1.8-1.4 3-3 3.2z" fill="currentColor" opacity="0.12" stroke="none" />
+      {/* 旁边的小种子 */}
+      <ellipse cx="17.5" cy="16.5" rx="1.6" ry="1.2" opacity="0.35" fill="currentColor" stroke="none" />
     </>
   ),
 }
