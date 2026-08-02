@@ -3,6 +3,9 @@
   "private": true,
   "version": "0.1.0",
   "description": "Echo — 一个面向深夜孤独大学生的 AI 陪伴素养平台",
+  "engines": {
+    "node": "22.x"
+  },
   "scripts": {
     "dev": "vite",
     "build": "tsc -b && vite build",
