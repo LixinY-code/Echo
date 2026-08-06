@@ -86,6 +86,8 @@ create table if not exists sessions (
   title text default '新的对话',
   message_count int default 0,
   summary text,
+  analysis text,
+  reflection_question text,
   summarized_at timestamptz,
   -- EmotionTree 果实数据（v4.0 情绪果实功能）
   emotion_type text,              -- 'joy'|'warm'|'sad'|'anxious'|'confused'|'calm'
@@ -102,6 +104,8 @@ create index if not exists idx_messages_session on messages(session_id);
 alter table sessions add column if not exists emotion_type text;
 alter table sessions add column if not exists emotion_color text;
 alter table sessions add column if not exists full_summary text;
+alter table sessions add column if not exists analysis text;
+alter table sessions add column if not exists reflection_question text;
 
 -- 微光任务（Glimmer Quests）：轻量日常彩蛋任务
 -- 每天 1-3 个，date 为上海时区日期；午夜后自然过期（不再返回）

@@ -96,7 +96,7 @@ function PuzzleDots({ puzzle }: { puzzle: GlimmerPuzzle }) {
 }
 
 const GlimmerNote: React.FC = () => {
-  const { t } = useLang()
+  const { t, lang } = useLang()
   const [quests, setQuests] = useState<GlimmerQuest[]>([])
   const [puzzle, setPuzzle] = useState<GlimmerPuzzle | null>(null)
   const [loading, setLoading] = useState(true)
@@ -235,7 +235,7 @@ const GlimmerNote: React.FC = () => {
                         quest.completed ? 'line-through decoration-milkBrown/30' : ''
                       }`}
                     >
-                      {quest.text}
+                      {lang === 'en' ? t(`glimmer.quest.${quest.questKey}`) : quest.text}
                     </p>
                   </div>
 

@@ -2,7 +2,7 @@
 // 读用户侧写注入 prompt 个性化回复；对话后更新侧写（长期记忆）
 const crypto = require('crypto')
 const { generateReply } = require('../lib/deepseek')
-const { ensureUser, saveMessage, getProfile, updateProfile } = require('../lib/store')
+const { ensureUser, saveMessage, touchSession, getProfile, updateProfile } = require('../lib/store')
 
 /**
  * 解析请求体（兼容 Verver Serverless Functions）
@@ -165,6 +165,7 @@ module.exports = async (req, res) => {
         saveMessage(uid, sid, 'ai', reply, mirror),
         updateProfile(uid, profile_update),
       ])
+      await touchSession(sid, 2)
       console.log('[chat] ✅ 消息存储成功')
     } catch (e) {
       console.warn('[chat] ⚠️ 存储/侧写更新失败（不影响回复）：', e?.message || e)

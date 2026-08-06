@@ -90,6 +90,11 @@ export interface ChatSession {
   updatedAt?: string
   messageCount: number
   summary?: string | null
+  analysis?: string | null
+  reflectionQuestion?: string | null
+  fullSummary?: string | null
+  emotionType?: EmotionAnalysisResponse['emotionType'] | null
+  emotionColor?: string | null
 }
 
 /** 会话列表响应 */
@@ -105,7 +110,9 @@ export interface SessionMessagesResponse {
 
 /** 会话总结响应 */
 export interface SessionSummaryResponse {
-  summary: string
+  summary: string | null
+  analysis: string | null
+  reflectionQuestion: string | null
   summarized: boolean
 }
 

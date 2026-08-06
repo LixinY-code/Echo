@@ -8,7 +8,7 @@ import PageTransition from '@/components/common/PageTransition'
 
 export default function Layout() {
   return (
-    <div className="flex min-h-screen flex-col bg-cream">
+    <div className="flex min-h-[100dvh] flex-col bg-cream native-safe-area">
       <Navbar />
       <main className="flex-1">
         <PageTransition>

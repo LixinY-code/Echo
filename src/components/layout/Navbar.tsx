@@ -6,7 +6,7 @@
 import { Link, useLocation } from 'react-router-dom'
 import HandDrawnIcon, { type IconName } from '@/components/common/HandDrawnIcon'
 import EchoLogo from '@/components/common/EchoLogo'
-import LanguageSwitcher from '@/components/common/LanguageSwitcher'
+import NativeNotificationButton from '@/components/common/NativeNotificationButton'
 import { useLang } from '@/i18n'
 
 interface NavItem {
@@ -32,7 +32,7 @@ export default function Navbar({ onNewChat }: NavbarProps) {
 
   return (
     <header className="sticky top-0 z-30 border-b border-milkBrown/5 bg-paper/90 backdrop-blur-md">
-      <nav className="mx-auto flex max-w-6xl items-center justify-between px-5 py-3">
+      <nav className="mx-auto flex max-w-6xl items-center justify-between py-3 pl-3 pr-16 sm:px-5 sm:pr-20">
         {/* ===== 左侧：Echo 品牌 Logo ===== */}
         <Link
           to="/"
@@ -71,10 +71,10 @@ export default function Navbar({ onNewChat }: NavbarProps) {
             )
           })}
 
-          {/* 语言切换（中/EN） */}
-          <LanguageSwitcher />
+          {/* Android 原生通知入口（仅在 APK 内显示） */}
+          <NativeNotificationButton />
 
-          {/* 分隔线 */}
+          {/* 分隔线；语言切换已提升到 App 全局固定层 */}
           <div className="mx-1 h-5 w-px bg-ink/10" />
 
           {/* v2.0 新增：+ 新对话按钮 */}

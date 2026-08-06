@@ -52,11 +52,23 @@ export default function BreathingOverlay({ onClose }: Props) {
   const [breathing, setBreathing] = useState(false)
   const [phase, setPhase] = useState<Phase>('idle')
   const [cycle, setCycle] = useState(0)
+  const [motionReady, setMotionReady] = useState(false)
   const timers = useRef<number[]>([])
 
   useEffect(() => {
-    if (!breathing) return
+    if (!breathing) {
+      setMotionReady(false)
+      return
+    }
     let cancelled = false
+
+    // 先渲染缩小态，再在下一帧进入 inhale，确保浏览器能播放首段 transition。
+    setPhase('exhale')
+    const startFrame = requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        if (!cancelled) setMotionReady(true)
+      })
+    })
 
     const runCycle = (n: number) => {
       if (cancelled || n >= TOTAL_CYCLES) {
@@ -80,41 +92,56 @@ export default function BreathingOverlay({ onClose }: Props) {
       timers.current.push(t1)
     }
 
-    runCycle(0)
+    const startTimer = window.setTimeout(() => runCycle(0), 80)
+    timers.current.push(startTimer)
     return () => {
       cancelled = true
+      cancelAnimationFrame(startFrame)
       timers.current.forEach((t) => clearTimeout(t))
       timers.current = []
     }
   }, [breathing])
 
-  const activeScale = phase !== 'idle' ? SCALE[phase] : 1
+  const activeScale = breathing && !motionReady
+    ? SCALE.exhale
+    : phase !== 'idle'
+      ? SCALE[phase]
+      : 1
   const activeDuration = phase !== 'idle' ? TRANSITION_DURATION[phase] : 600
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-ink/30 backdrop-blur-sm animate-fade-in">
       <div className="relative flex flex-col items-center px-8 text-center">
-        {/* 脉动柔光圆圈 */}
-        <div className="relative mb-10 flex h-56 w-56 items-center justify-center">
+        {/* 外层负责待机脉动，内层负责 4-7-8 阶段缩放，避免 transform 互相覆盖 */}
+        <div className={`relative mb-10 flex h-56 w-56 items-center justify-center ${breathing ? '' : 'animate-breathe'}`}>
           <div
             className="absolute inset-0 rounded-full bg-amber/20 blur-xl"
             style={{
               transform: `scale(${activeScale})`,
-              transition: `transform ${activeDuration}ms cubic-bezier(0.4,0,0.2,1)`,
+              transitionProperty: 'transform',
+              transitionDuration: `${motionReady ? activeDuration : 0}ms`,
+              transitionTimingFunction: 'cubic-bezier(0.4,0,0.2,1)',
+              willChange: breathing ? 'transform' : 'auto',
             }}
           />
           <div
             className="absolute inset-6 rounded-full bg-amber/40 blur-md"
             style={{
               transform: `scale(${activeScale})`,
-              transition: `transform ${activeDuration}ms cubic-bezier(0.4,0,0.2,1)`,
+              transitionProperty: 'transform',
+              transitionDuration: `${motionReady ? activeDuration : 0}ms`,
+              transitionTimingFunction: 'cubic-bezier(0.4,0,0.2,1)',
+              willChange: breathing ? 'transform' : 'auto',
             }}
           />
           <div
             className="relative flex h-28 w-28 items-center justify-center rounded-full bg-amber/80 shadow-glow"
             style={{
               transform: `scale(${activeScale * 0.9 + 0.1})`,
-              transition: `transform ${activeDuration}ms cubic-bezier(0.4,0,0.2,1)`,
+              transitionProperty: 'transform',
+              transitionDuration: `${motionReady ? activeDuration : 0}ms`,
+              transitionTimingFunction: 'cubic-bezier(0.4,0,0.2,1)',
+              willChange: breathing ? 'transform' : 'auto',
             }}
           >
             <HandDrawnIcon name="breath" className="h-10 w-10 text-white" />

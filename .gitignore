@@ -9,3 +9,14 @@ dist-ssr
 !.vscode/extensions.json
 *.log
 *.tsbuildinfo
+
+# Android local build settings and artifacts
+android/.gradle/
+android/local.properties
+android/app/build/
+android/build/
+*.jks
+*.keystore
+
+# Firebase project-specific client config (supply locally/CI)
+android/app/google-services.json

@@ -1,0 +1,18 @@
+{
+  "name": "Echo · 会呼吸的陪伴手帐",
+  "short_name": "Echo",
+  "description": "深夜 AI 陪伴素养平台",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#FFF9EF",
+  "theme_color": "#FFF9EF",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "/lamp.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}

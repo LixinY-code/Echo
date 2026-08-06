@@ -202,11 +202,11 @@ export default function Sidebar({
                   <div className="flex items-start justify-between gap-2">
                     <div className="flex items-center gap-2 min-w-0 flex-1">
                       {/* v4.0：情绪果实颜色指示器 */}
-                      {(s as any).emotionColor && (
+                      {s.emotionColor && (
                         <span
                           className="mt-0.5 h-2.5 w-2.5 flex-shrink-0 rounded-full"
-                          style={{ backgroundColor: (s as any).emotionColor }}
-                          title={(s as any).emotionType || '已分析'}
+                          style={{ backgroundColor: s.emotionColor }}
+                          title={s.emotionType || '已分析'}
                         />
                       )}
                       <span
@@ -243,9 +243,9 @@ export default function Sidebar({
                   </div>
 
                   {/* 总结预览（有总结时显示） */}
-                  {s.summary && (
+                  {(s.summary || s.fullSummary) && (
                     <p className="mt-0.5 line-clamp-2 text-[11px] leading-relaxed text-hint/80">
-                      {s.summary}
+                      {s.summary || s.fullSummary}
                     </p>
                   )}
 

@@ -10,7 +10,6 @@ import { timeLabel } from '@/utils/time'
 import HandDrawnIcon from '@/components/common/HandDrawnIcon'
 import EchoLogo from '@/components/common/EchoLogo' // v2.0 新增
 import GlimmerNote from '@/components/common/GlimmerNote' // 微光任务小纸条
-import LanguageSwitcher from '@/components/common/LanguageSwitcher'
 import { useLang } from '@/i18n'
 
 export default function WelcomePage() {
@@ -19,12 +18,7 @@ export default function WelcomePage() {
   const greeting = t(`welcome.greeting.${label}`)
 
   return (
-    <div className="relative min-h-screen overflow-hidden bg-cream">
-      {/* ===== 右上角：语言切换 ===== */}
-      <div className="absolute right-4 top-4 z-20 animate-fade-in">
-        <LanguageSwitcher />
-      </div>
-
+    <div className="relative min-h-[100dvh] overflow-hidden bg-cream">
       {/* ===== 背景手绘小书桌场景 ===== */}
       <DeskScene label={label} />
 
@@ -39,7 +33,7 @@ export default function WelcomePage() {
       />
 
       {/* ===== 主体内容 ===== */}
-      <div className="relative z-10 flex min-h-screen flex-col items-center justify-center px-6 text-center">
+      <div className="relative z-10 flex min-h-[100dvh] flex-col items-center justify-center px-6 text-center">
         {/* v2.0: Echo 品牌Logo（替代原来的 mirror 图标） */}
         <div className="mb-8 animate-fade-in">
           <EchoLogo size="lg" showText={true} animated={false} className="mx-auto h-32 w-auto" />

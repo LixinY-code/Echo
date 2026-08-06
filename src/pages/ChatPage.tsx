@@ -11,7 +11,17 @@
  */
 import { useEffect, useRef, useState, useCallback, type KeyboardEvent } from 'react'
 import type { ChatMessage } from '@/types'
-import { sendChat, getLabVersions, updateSessionTitle, analyzeSessionEmotion, growBlindspot } from '@/services/api'
+import {
+  sendChat,
+  getLabVersions,
+  updateSessionTitle,
+  analyzeSessionEmotion,
+  summarizeSession,
+  getSessionMessages,
+  getSessions,
+  createSession,
+  growBlindspot,
+} from '@/services/api'
 import { useApp } from '@/context/AppContext'
 import { useLang } from '@/i18n'
 import { genId, isLateNight } from '@/utils/time'
@@ -49,16 +59,24 @@ export default function ChatPage() {
   const [sending, setSending] = useState(false)
   const [showBreathing, setShowBreathing] = useState(false)
 
-  // 当前会话是否已总结过
-  const [summarized, setSummarized] = useState(false)
+  const [loadingHistory, setLoadingHistory] = useState(false)
 
   const scrollRef = useRef<HTMLDivElement>(null)
   const textareaRef = useRef<HTMLTextAreaElement>(null)
   const breathingShown = useRef(false)
   /** 记录当前会话第一条用户消息，用于自动生成标题 */
   const firstUserMsgRef = useRef<string | null>(null)
-  /** 上一次活跃的 chatId，用于检测切换事件 */
-  const prevChatIdRef = useRef<string | null>(activeChatId)
+  const currentSessionRef = useRef<string | null>(sessionId)
+  const sessionRevisionRef = useRef(new Map<string, number>())
+  const summarizedRevisionRef = useRef(new Map<string, number>())
+  const summaryInFlightRef = useRef(new Set<string>())
+  const skipNextRestoreRef = useRef(false)
+  const sendGenerationRef = useRef(0)
+  const sendingSessionRef = useRef<string | null>(null)
+
+  useEffect(() => {
+    currentSessionRef.current = sessionId
+  }, [sessionId])
 
   /** 自动滚到底 */
   const scrollToBottom = useCallback(() => {
@@ -73,27 +91,6 @@ export default function ChatPage() {
   useEffect(() => {
     scrollToBottom()
   }, [messages, scrollToBottom])
-
-  /* ===== 检测会话切换 → 触发自动总结 + 重置状态 ===== */
-  useEffect(() => {
-    const prevId = prevChatIdRef.current
-    const currId = activeChatId
-
-    // 从一个有消息的会话切走时，触发总结
-    if (prevId && prevId !== currId && messages.length > 1 && !summarized) {
-      triggerSummary(prevId)
-    }
-
-    // 切换到新会话时重置消息
-    if (currId !== prevId) {
-      setMessages(initialMessages(t))
-      setSummarized(false)
-      firstUserMsgRef.current = null
-      setInput('')
-    }
-
-    prevChatIdRef.current = currId
-  }, [activeChatId]) // eslint-disable-line react-hooks/exhaustive-deps
 
   /* ===== 呼吸暂停提醒 ===== */
   useEffect(() => {
@@ -121,16 +118,94 @@ export default function ChatPage() {
     return () => timers.forEach((t) => clearTimeout(t))
   }, [])
 
-  /** 触发情绪分析（不阻塞 UI）—— 替代原来的简单总结 */
-  const triggerSummary = useCallback(async (sid: string | null) => {
+  /** 离开会话时生成回顾，并保留现有情绪分析（均不阻塞导航） */
+  const endConversation = useCallback((sid: string | null) => {
     if (!sid || sid === 'temp') return
-    try {
-      // v4.0：使用情绪分析 API（同时生成总结 + 情绪果实数据）
-      await analyzeSessionEmotion(sid)
-    } catch (e) {
-      console.warn('[chat] 情绪分析失败（非阻塞）：', e)
-    }
+
+    const revision = sessionRevisionRef.current.get(sid) || 0
+    if (revision <= 0) return
+    const summarizedRevision = summarizedRevisionRef.current.get(sid) ?? -1
+    if (revision <= summarizedRevision || summaryInFlightRef.current.has(sid)) return
+
+    summaryInFlightRef.current.add(sid)
+    void summarizeSession(sid)
+      .then((summary) => {
+        if (!summary?.summarized) return
+        summarizedRevisionRef.current.set(sid, revision)
+        void analyzeSessionEmotion(sid)
+      })
+      .finally(() => {
+        summaryInFlightRef.current.delete(sid)
+      })
   }, [])
+
+  /** 组件卸载即判定本轮对话结束 */
+  useEffect(() => {
+    return () => endConversation(currentSessionRef.current)
+  }, [endConversation])
+
+  /** 进入或切换历史会话时，仅显示 AI 生成的回顾，不回放完整聊天 */
+  useEffect(() => {
+    let cancelled = false
+
+    async function restoreConversation() {
+      if (skipNextRestoreRef.current) {
+        skipNextRestoreRef.current = false
+        return
+      }
+
+      setInput('')
+      firstUserMsgRef.current = null
+
+      if (!activeChatId) {
+        setMessages(initialMessages(t))
+        setLoadingHistory(false)
+        return
+      }
+
+      setLoadingHistory(true)
+      try {
+        const [history, sessions] = await Promise.all([
+          getSessionMessages(activeChatId),
+          getSessions(),
+        ])
+        if (cancelled) return
+
+        const session = sessions.find((item) => item.id === activeChatId)
+        const restored = history && history.length > 0 ? history : []
+        const persistedRevision = session?.messageCount || restored.length
+        sessionRevisionRef.current.set(activeChatId, persistedRevision)
+        if (session?.summary) summarizedRevisionRef.current.set(activeChatId, persistedRevision)
+        const recapMessages: ChatMessage[] = []
+
+        if (session?.summary) {
+          const analysis = session.analysis || session.fullSummary || t('chat.initial')
+          const recap = t('chat.recap.prefix', {
+            summary: session.summary,
+            analysis,
+          })
+          const question = session.reflectionQuestion
+            ? `\n\n${t('chat.recap.question', { question: session.reflectionQuestion })}`
+            : ''
+          recapMessages.push({
+            id: `recap-${activeChatId}`,
+            role: 'ai',
+            text: `${recap}${question}`,
+            timestamp: Date.now(),
+          })
+        }
+
+        setMessages(recapMessages.length > 0 ? recapMessages : (restored.length > 0 ? restored : initialMessages(t)))
+      } finally {
+        if (!cancelled) setLoadingHistory(false)
+      }
+    }
+
+    void restoreConversation()
+    return () => {
+      cancelled = true
+    }
+  }, [activeChatId, t])
 
   /** 更新某条消息 */
   const patchMessage = useCallback(
@@ -167,35 +242,74 @@ export default function ChatPage() {
     setMessages((prev) => [...prev, userMsg, aiMsg])
     setInput('')
     setSending(true)
+    const sendGeneration = ++sendGenerationRef.current
 
     try {
-      const res = await sendChat(text, sessionId ?? undefined)
-      if (res.sessionId) setSessionId(res.sessionId)
+      let effectiveSessionId = sessionId
+      if (!effectiveSessionId) {
+        const session = await createSession()
+        effectiveSessionId = session.id
+        skipNextRestoreRef.current = true
+        setSessionId(session.id)
+        setActiveChatId(session.id)
+        currentSessionRef.current = session.id
+      }
+
+      sendingSessionRef.current = effectiveSessionId
+      const res = await sendChat(text, effectiveSessionId)
+      const savedSessionId = res.sessionId || effectiveSessionId
+      if (savedSessionId && savedSessionId !== 'temp') {
+        sessionRevisionRef.current.set(
+          savedSessionId,
+          (sessionRevisionRef.current.get(savedSessionId) || 0) + 2,
+        )
+      }
+
+      const isCurrentSend = sendGenerationRef.current === sendGeneration
+      const isStillSameSession = currentSessionRef.current === effectiveSessionId
+      if (!isCurrentSend || !isStillSameSession) {
+        endConversation(savedSessionId)
+        return
+      }
+
+      if (res.sessionId) {
+        setSessionId(res.sessionId)
+        if (res.sessionId !== activeChatId) {
+          skipNextRestoreRef.current = true
+          setActiveChatId(res.sessionId)
+        }
+        currentSessionRef.current = res.sessionId
+      }
       patchMessage(aiMsg.id, {
         text: res.reply,
         mirror: res.mirror,
       })
 
       // 用第一条用户消息更新会话标题（仅首次）
-      if (firstUserMsgRef.current && sessionId && sessionId !== 'temp') {
+      if (firstUserMsgRef.current && savedSessionId && savedSessionId !== 'temp') {
         const title = firstUserMsgRef.current.slice(0, 30) + (firstUserMsgRef.current.length > 30 ? '…' : '')
-        updateSessionTitle(sessionId, title).catch(() => {})
+        updateSessionTitle(savedSessionId, title).catch(() => {})
         firstUserMsgRef.current = null // 只设置一次
       }
     } catch {
-      patchMessage(aiMsg.id, { text: '', error: true })
+      if (sendGenerationRef.current === sendGeneration) {
+        patchMessage(aiMsg.id, { text: '', error: true })
+      }
     } finally {
-      setSending(false)
+      if (sendGenerationRef.current === sendGeneration) setSending(false)
+      if (sendingSessionRef.current === currentSessionRef.current) sendingSessionRef.current = null
     }
-  }, [input, sending, sessionId, setSessionId, patchMessage])
+  }, [input, sending, sessionId, activeChatId, setSessionId, setActiveChatId, patchMessage, endConversation])
 
-  /** 切换会话 */
+  /** 切换会话：先结束当前轮，再进入目标会话 */
   const handleSwitchSession = useCallback(async (id: string | null) => {
-    // 对当前会话做总结
-    if (messages.length > 1 && !summarized && sessionId && sessionId !== 'temp') {
-      triggerSummary(sessionId)
-    }
+    const leavingSessionId = sendingSessionRef.current || sessionId
+    sendGenerationRef.current += 1
+    setSending(false)
+    endConversation(leavingSessionId)
 
+    currentSessionRef.current = id
+    sendingSessionRef.current = null
     setActiveChatId(id)
     if (id) {
       setSessionId(id)
@@ -203,7 +317,7 @@ export default function ChatPage() {
       // 切到"新建"态
       setSessionId(null)
     }
-  }, [messages.length, summarized, sessionId, setActiveChatId, setSessionId, triggerSummary])
+  }, [sessionId, setActiveChatId, setSessionId, endConversation])
 
   /** 重试失败的 AI 消息 */
   const handleRetry = useCallback(
@@ -313,7 +427,12 @@ export default function ChatPage() {
           className="flex-1 overflow-y-auto px-4 py-6 sm:px-6"
         >
           <div className="mx-auto flex max-w-2xl flex-col gap-4">
-            {messages.map((m) => (
+            {loadingHistory && (
+              <div className="self-start rounded-3xl rounded-bl-lg bg-paper px-5 py-3 text-sm text-hint shadow-soft" aria-live="polite">
+                {t('chat.historyLoading')}
+              </div>
+            )}
+            {!loadingHistory && messages.map((m) => (
               <ChatBubble
                 key={m.id}
                 message={m}
@@ -350,12 +469,12 @@ export default function ChatPage() {
                 rows={1}
                 placeholder={t('chat.placeholder')}
                 className="max-h-32 flex-1 resize-none bg-transparent px-1 py-1.5 text-[15px] text-ink placeholder:text-hint focus:outline-none"
-                disabled={sending}
+                disabled={sending || loadingHistory}
               />
               {/* v2.0 圆形浅杏色发送按钮 */}
               <button
                 onClick={handleSend}
-                disabled={!input.trim() || sending}
+                disabled={!input.trim() || sending || loadingHistory}
                 aria-label={t('chat.send')}
                 className="interactive-hover flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full bg-apricot text-milkBrown shadow-soft transition-all duration-300 ease-soft hover:bg-apricot-light hover:shadow-glow disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:scale-100"
               >

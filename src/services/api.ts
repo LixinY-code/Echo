@@ -67,18 +67,35 @@ function getDeviceId(): string {
 
 /** 统一请求封装（真实后端用） */
 async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
-  const res = await fetch(`${BASE_URL}${path}`, {
-    ...options,
-    headers: {
-      'Content-Type': 'application/json',
-      'X-User-Id': getDeviceId(),
-      ...(options.headers || {}),
-    },
-  })
-  if (!res.ok) {
-    throw new Error(`请求失败：${res.status} ${res.statusText}`)
+  if (typeof navigator !== 'undefined' && !navigator.onLine) {
+    throw new Error('当前处于离线状态，请联网后重试')
   }
-  return (await res.json()) as T
+
+  const controller = new AbortController()
+  const timeout = window.setTimeout(() => controller.abort(), 15000)
+
+  try {
+    const res = await fetch(`${BASE_URL}${path}`, {
+      ...options,
+      signal: options.signal || controller.signal,
+      headers: {
+        'Content-Type': 'application/json',
+        'X-User-Id': getDeviceId(),
+        ...(options.headers || {}),
+      },
+    })
+    if (!res.ok) {
+      throw new Error(`请求失败：${res.status} ${res.statusText}`)
+    }
+    return (await res.json()) as T
+  } catch (error) {
+    if (error instanceof DOMException && error.name === 'AbortError') {
+      throw new Error('连接超时，请检查网络后重试')
+    }
+    throw error
+  } finally {
+    window.clearTimeout(timeout)
+  }
 }
 
 /* ============================================================
@@ -193,11 +210,28 @@ export async function sendChat(
 ): Promise<ChatResponse> {
   if (USE_MOCK) {
     await delay(700 + Math.random() * 600)
-    return {
-      reply: mockReply(message),
-      mirror: mockMirror(message),
-      sessionId: sessionId || genId(),
+    const sid = sessionId || genId()
+    const reply = mockReply(message)
+    const mirror = mockMirror(message)
+    const messageMap = loadMockSessionMessages()
+    const now = Date.now()
+    const nextMessages = [
+      ...(messageMap[sid] || []),
+      { id: genId(), role: 'user' as const, text: message, timestamp: now },
+      { id: genId(), role: 'ai' as const, text: reply, mirror, timestamp: now + 1 },
+    ]
+    messageMap[sid] = nextMessages
+    saveMockSessionMessages(messageMap)
+
+    const sessions = await getSessions()
+    const session = sessions.find((item) => item.id === sid)
+    if (session) {
+      session.messageCount = nextMessages.length
+      session.updatedAt = new Date().toISOString()
+      try { localStorage.setItem(SESSIONS_KEY, JSON.stringify(sessions)) } catch { /* ignore */ }
     }
+
+    return { reply, mirror, sessionId: sid }
   }
   return request<ChatResponse>('/chat', {
     method: 'POST',
@@ -372,6 +406,24 @@ export const apiDebug = { USE_MOCK, BASE_URL }
  * ============================================================ */
 
 const SESSIONS_KEY = 'echo_sessions' // mock 会话列表缓存
+const SESSION_MESSAGES_KEY = 'echo_session_messages' // mock 会话消息缓存
+
+function loadMockSessionMessages(): Record<string, ChatMessage[]> {
+  try {
+    const raw = localStorage.getItem(SESSION_MESSAGES_KEY)
+    return raw ? JSON.parse(raw) : {}
+  } catch {
+    return {}
+  }
+}
+
+function saveMockSessionMessages(messages: Record<string, ChatMessage[]>): void {
+  try {
+    localStorage.setItem(SESSION_MESSAGES_KEY, JSON.stringify(messages))
+  } catch {
+    /* ignore */
+  }
+}
 
 /** 获取会话列表 */
 export async function getSessions(): Promise<ChatSession[]> {
@@ -420,8 +472,7 @@ export async function createSession(title?: string): Promise<ChatSession> {
 export async function getSessionMessages(sessionId: string): Promise<ChatMessage[] | null> {
   if (USE_MOCK) {
     await delay(300)
-    // mock：返回空数组表示新会话，或模拟旧会话数据
-    return null // 前端会在 null 时显示空白开场白
+    return loadMockSessionMessages()[sessionId] || []
   }
   try {
     const res = await request<SessionMessagesResponse>(`/sessions/${sessionId}`, { method: 'GET' })
@@ -452,23 +503,47 @@ export async function deleteSession(sessionId: string): Promise<void> {
   if (USE_MOCK) {
     await delay(200)
     const list = (await getSessions()).filter((s) => s.id !== sessionId)
+    const messageMap = loadMockSessionMessages()
+    delete messageMap[sessionId]
     try { localStorage.setItem(SESSIONS_KEY, JSON.stringify(list)) } catch { /* ignore */ }
+    saveMockSessionMessages(messageMap)
     return
   }
   await request(`/sessions/${sessionId}`, { method: 'DELETE' })
 }
 
-/** 触发 AI 总结会话 */
-export async function summarizeSession(sessionId: string): Promise<string | null> {
+/** 触发 AI 总结会话，并生成下次进入时的分析与引导问题 */
+export async function summarizeSession(sessionId: string): Promise<SessionSummaryResponse | null> {
   if (USE_MOCK) {
     await delay(600)
-    return '一次关于「' + (sessionId.slice(0, 6)) + '」的温暖对话。'
+    const messages = loadMockSessionMessages()[sessionId] || []
+    const userMessages = messages.filter((item) => item.role === 'user')
+    if (userMessages.length === 0) {
+      return { summary: null, analysis: null, reflectionQuestion: null, summarized: false }
+    }
+
+    const lastTopic = userMessages.at(-1)?.text.trim() || '最近让你挂心的一件事'
+    const result: SessionSummaryResponse = {
+      summary: `你提到“${lastTopic.slice(0, 42)}${lastTopic.length > 42 ? '…' : ''}”，也聊到了它带来的感受和压力。`,
+      analysis: '你一边希望把事情做好，一边也在认真辨认自己真正需要的支持。',
+      reflectionQuestion: '如果今天只往前走一小步，你最愿意从哪里开始？',
+      summarized: true,
+    }
+    const sessions = await getSessions()
+    const session = sessions.find((item) => item.id === sessionId)
+    if (session) {
+      session.summary = result.summary
+      session.analysis = result.analysis
+      session.reflectionQuestion = result.reflectionQuestion
+      session.updatedAt = new Date().toISOString()
+      try { localStorage.setItem(SESSIONS_KEY, JSON.stringify(sessions)) } catch { /* ignore */ }
+    }
+    return result
   }
   try {
-    const res = await request<SessionSummaryResponse>(`/sessions/${sessionId}/summary`, {
+    return await request<SessionSummaryResponse>(`/sessions/${sessionId}/summary`, {
       method: 'POST',
     })
-    return res.summary
   } catch {
     return null
   }

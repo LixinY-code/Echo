@@ -124,13 +124,20 @@ module.exports = async (req, res) => {
         return res.status(500).json({
           error: '服务配置错误：DeepSeek API Key 未设置',
           summary: null,
+          analysis: null,
+          reflectionQuestion: null,
           summarized: false,
         })
       }
 
       const messages = await getSessionMessages(uid, sessionId)
       if (!messages || messages.length < 2) {
-        return res.json({ summary: '对话太短，暂无总结。', summarized: false })
+        return res.json({
+          summary: '对话太短，暂无总结。',
+          analysis: '',
+          reflectionQuestion: '',
+          summarized: false,
+        })
       }
       // 取用户消息 + AI 回复的文本
       const chatText = messages
@@ -138,13 +145,15 @@ module.exports = async (req, res) => {
         .map((m) => `${m.role === 'user' ? '用户' : 'Echo'}：${m.text}`)
         .join('\n')
       try {
-        const summary = await generateSummary(chatText)
-        await updateSessionSummary(sessionId, summary)
-        return res.json({ summary, summarized: true })
+        const summaryData = await generateSummary(chatText)
+        await updateSessionSummary(sessionId, summaryData)
+        return res.json({ ...summaryData, summarized: true })
       } catch (e) {
         console.error('[sessions/summary] DeepSeek 失败：', e)
         return res.json({
           summary: '总结生成失败，请稍后重试。',
+          analysis: '',
+          reflectionQuestion: '',
           summarized: false,
           error: e?.message || String(e),
         })
