@@ -5,8 +5,12 @@
 import { Outlet } from 'react-router-dom'
 import Navbar from '@/components/layout/Navbar'
 import PageTransition from '@/components/common/PageTransition'
+import BreathingOverlay from '@/features/chat/BreathingOverlay'
+import { useApp } from '@/context/AppContext'
 
 export default function Layout() {
+  const { breathingOpen, closeBreathing } = useApp()
+
   return (
     <div className="flex min-h-[100dvh] flex-col bg-cream native-safe-area">
       <Navbar />
@@ -15,6 +19,8 @@ export default function Layout() {
           <Outlet />
         </PageTransition>
       </main>
+
+      {breathingOpen && <BreathingOverlay onClose={closeBreathing} />}
     </div>
   )
 }

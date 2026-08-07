@@ -34,6 +34,7 @@ const zh: Record<string, string> = {
   'nav.insights': '周信',
   'nav.corner': '角落',
   'nav.garden': '花园',
+  'nav.breathing': '呼吸',
   'nav.newChat': '新对话',
 
   // ---- 欢迎页 ----
@@ -90,7 +91,7 @@ const zh: Record<string, string> = {
   'breath.text2': '就和自己待一小会儿。',
   'breath.start': '试试约 40 秒呼吸引导',
   'breath.round': '第 {n} / {total} 轮 · 跟着圆圈呼吸',
-  'breath.continue': '继续聊天',
+  'breath.continue': '关闭引导',
   'breath.share': '转发截图',
   'breath.shareTitle': 'Echo · 呼吸引导',
   'breath.shareText': '在 Echo 跟着圆圈呼吸，很平静。',
@@ -284,6 +285,7 @@ const en: Record<string, string> = {
   'nav.insights': 'Letter',
   'nav.corner': 'Corner',
   'nav.garden': 'Garden',
+  'nav.breathing': 'Breathe',
   'nav.newChat': 'New chat',
 
   // ---- 欢迎页 ----
@@ -340,7 +342,7 @@ const en: Record<string, string> = {
   'breath.text2': 'just stay with yourself for a moment.',
   'breath.start': 'Try the 40-second breathing guide',
   'breath.round': 'Round {n} of {total} · breathe with the circle',
-  'breath.continue': 'Back to chat',
+  'breath.continue': 'Close guide',
   'breath.share': 'Share a screenshot',
   'breath.shareTitle': 'Echo · Breathing guide',
   'breath.shareText': 'Breathing with the circle in Echo. So calm.',

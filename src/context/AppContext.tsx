@@ -23,6 +23,11 @@ interface AppState {
   /** 当前选中的多会话 ID（用于切换历史对话） */
   activeChatId: string | null
   setActiveChatId: (id: string | null) => void
+
+  /** 全局呼吸引导弹层（由顶部按钮或聊天页温柔提醒打开） */
+  breathingOpen: boolean
+  openBreathing: () => void
+  closeBreathing: () => void
 }
 
 const AppContext = createContext<AppState | null>(null)
@@ -32,6 +37,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const [questCount, setQuestCount] = useState<number>(getLocalQuestCount())
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const [activeChatId, setActiveChatId] = useState<string | null>(null)
+  const [breathingOpen, setBreathingOpen] = useState(false)
 
   const refreshQuestCount = useCallback(() => {
     setQuestCount(getLocalQuestCount())
@@ -44,6 +50,9 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const toggleSidebar = useCallback(() => {
     setSidebarOpen((prev) => !prev)
   }, [])
+
+  const openBreathing = useCallback(() => setBreathingOpen(true), [])
+  const closeBreathing = useCallback(() => setBreathingOpen(false), [])
 
   return (
     <AppContext.Provider
@@ -58,6 +67,9 @@ export function AppProvider({ children }: { children: ReactNode }) {
         toggleSidebar,
         activeChatId,
         setActiveChatId,
+        breathingOpen,
+        openBreathing,
+        closeBreathing,
       }}
     >
       {children}

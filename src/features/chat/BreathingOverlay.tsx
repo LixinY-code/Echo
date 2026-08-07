@@ -1,10 +1,10 @@
 /**
- * BreathingOverlay — 呼吸暂停提醒遮罩
- * 触发条件（由 ChatPage 控制）：停留超过 15 分钟，或 23:00-5:00 深夜时段。
+ * BreathingOverlay — 全局呼吸引导遮罩
+ * 可由顶部导航按钮主动打开，也可由 ChatPage 的停留/深夜温柔提醒触发。
  * - 屏幕中央半透明遮罩 + 脉动柔光圆圈
  * - 文案："不需要解决任何问题，就和自己待一小会儿。"
- * - 可选 30 秒呼吸引导（4-7-8 节奏：吸气4s / 屏息7s / 呼气8s）
- * - "继续聊天"跳过按钮
+ * - 可选约 40 秒呼吸引导（4-7-8 节奏：吸气4s / 屏息7s / 呼气8s，共两轮）
+ * - 全局关闭按钮
  * 柔和的不打断提醒，不计入任何统计。
  */
 import { useEffect, useRef, useState } from 'react'
@@ -54,6 +54,14 @@ export default function BreathingOverlay({ onClose }: Props) {
   const [cycle, setCycle] = useState(0)
   const [motionReady, setMotionReady] = useState(false)
   const timers = useRef<number[]>([])
+
+  useEffect(() => {
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') onClose()
+    }
+    document.addEventListener('keydown', onKeyDown)
+    return () => document.removeEventListener('keydown', onKeyDown)
+  }, [onClose])
 
   useEffect(() => {
     if (!breathing) {
@@ -110,7 +118,12 @@ export default function BreathingOverlay({ onClose }: Props) {
   const activeDuration = phase !== 'idle' ? TRANSITION_DURATION[phase] : 600
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-ink/30 backdrop-blur-sm animate-fade-in">
+    <div
+      className="fixed inset-0 z-[70] flex items-center justify-center bg-ink/30 backdrop-blur-sm animate-fade-in"
+      role="dialog"
+      aria-modal="true"
+      aria-label={t('nav.breathing')}
+    >
       <div className="relative flex flex-col items-center px-8 text-center">
         {/* 外层负责待机脉动，内层负责 4-7-8 阶段缩放，避免 transform 互相覆盖 */}
         <div className={`relative mb-10 flex h-56 w-56 items-center justify-center ${breathing ? '' : 'animate-breathe'}`}>

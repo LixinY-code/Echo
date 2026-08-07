@@ -27,7 +27,6 @@ import { useLang } from '@/i18n'
 import { genId, isLateNight } from '@/utils/time'
 import HandDrawnIcon from '@/components/common/HandDrawnIcon'
 import ChatBubble from '@/features/chat/ChatBubble'
-import BreathingOverlay from '@/features/chat/BreathingOverlay'
 import Sidebar from '@/components/chat/Sidebar'
 
 /** 初始 AI 开场白（按当前语言生成） */
@@ -51,14 +50,13 @@ export default function ChatPage() {
     toggleSidebar,
     activeChatId,
     setActiveChatId,
+    openBreathing,
   } = useApp()
 
   // 消息列表
   const [messages, setMessages] = useState<ChatMessage[]>(() => initialMessages(t))
   const [input, setInput] = useState('')
   const [sending, setSending] = useState(false)
-  const [showBreathing, setShowBreathing] = useState(false)
-
   const [loadingHistory, setLoadingHistory] = useState(false)
 
   const scrollRef = useRef<HTMLDivElement>(null)
@@ -100,7 +98,7 @@ export default function ChatPage() {
     const t1 = window.setTimeout(() => {
       if (!breathingShown.current) {
         breathingShown.current = true
-        setShowBreathing(true)
+        openBreathing()
       }
     }, STAY_MS)
     timers.push(t1)
@@ -109,14 +107,14 @@ export default function ChatPage() {
       const t2 = window.setTimeout(() => {
         if (!breathingShown.current) {
           breathingShown.current = true
-          setShowBreathing(true)
+          openBreathing()
         }
       }, 90 * 1000)
       timers.push(t2)
     }
 
     return () => timers.forEach((t) => clearTimeout(t))
-  }, [])
+  }, [openBreathing])
 
   /** 离开会话时生成回顾，并保留现有情绪分析（均不阻塞导航） */
   const endConversation = useCallback((sid: string | null) => {
@@ -484,11 +482,6 @@ export default function ChatPage() {
           </div>
         </div>
       </div>
-
-      {/* 呼吸暂停提醒 */}
-      {showBreathing && (
-        <BreathingOverlay onClose={() => setShowBreathing(false)} />
-      )}
     </div>
   )
 }
